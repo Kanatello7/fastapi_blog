@@ -1,26 +1,41 @@
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
-import fastapi.responses
+from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
 app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 posts: list[dict] = [
     {
         "id": 1,
-        "name": "Kanat",
-        "age": 20,
+        "author": "Corey Schafer",
+        "title": "FastAPI is Awesome",
+        "content": "This framework is really easy to use and super fast.",
+        "date_posted": "April 20, 2025",
     },
     {
         "id": 2,
-        "name": "Tom",
-        "age": 29
+        "author": "Jane Doe",
+        "title": "Python is Great for Web Development",
+        "content": "Python is a great language for web development, and FastAPI makes it even better.",
+        "date_posted": "April 21, 2025",
     },
 ]
 
-@app.get("/api/posts")
-def get_dict() -> list[dict]:
-    return posts
 
-@app.get("/", response_class=HTMLResponse, include_in_schema=False)
-@app.get("/posts", response_class=HTMLResponse, include_in_schema=False)
-def home() -> str:
-    return f"<h1>{posts[0]["name"]}</h1>"
+@app.get("/api/posts/{post_id}")
+def get_post(post_id: int) -> dict:
+    for post in posts:
+        if post["id"] == post_id:
+            return post
+    return {"error": "Post not found"}
+
+
+@app.get("/", include_in_schema=False, name="home")
+@app.get("/posts", include_in_schema=False, name="posts")
+def home(request: Request) -> str:
+    return templates.TemplateResponse(
+        request, "home.html", {"posts": posts, "title": "Home"}
+    )
