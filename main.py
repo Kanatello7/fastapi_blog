@@ -33,6 +33,11 @@ def get_post(post_id: int) -> dict:
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
 
 
+@app.get("/api/posts")
+def get_posts() -> list[dict]:
+    return posts
+
+
 @app.get("/", include_in_schema=False, name="home")
 @app.get("/posts", include_in_schema=False, name="posts")
 def home(request: Request) -> str:
