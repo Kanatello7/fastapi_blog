@@ -1,4 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -6,6 +8,47 @@ app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
+
+@app.exception_handler(HTTPException)
+def general_http_exception_handler(request: Request, exc: HTTPException):
+    message = (
+        exc.detail
+        if exc.detail
+        else "An error occured. Please check you request and try again."
+    )
+    if request.url.path.startswith("/api"):
+        return JSONResponse(status_code=exc.status_code, content={"detail": message})
+    return templates.TemplateResponse(
+        request,
+        "error.html",
+        {
+            "status_code": exc.status_code,
+            "title": exc.status_code,
+            "message": message,
+        },
+        status_code=exc.status_code,
+    )
+
+
+@app.exception_handler(RequestValidationError)
+def request_exception_handler(request: Request, exc: RequestValidationError):
+    if request.url.path.startswith("/api"):
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            content={"detail": exc.errors()},
+        )
+    return templates.TemplateResponse(
+        request,
+        "error.html",
+        {
+            "status_code": status.HTTP_422_UNPROCESSABLE_CONTENT,
+            "title": status.HTTP_422_UNPROCESSABLE_CONTENT,
+            "message": "Invalid request. Please check your input and try again.",
+        },
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+    )
+
 
 posts: list[dict] = [
     {
@@ -25,8 +68,23 @@ posts: list[dict] = [
 ]
 
 
+@app.get(
+    "/posts/{post_id}",
+    include_in_schema=False,
+    response_class=templates.TemplateResponse,
+)
+def post_page(request: Request, post_id: int):
+    for post in posts:
+        if post["id"] == post_id:
+            title = post["title"][:50]
+            return templates.TemplateResponse(
+                request, "post.html", {"post": post, "title": title}
+            )
+    raise HTTPException(status_code=404, detail="Post not found")
+
+
 @app.get("/api/posts/{post_id}")
-def get_post(post_id: int) -> dict:
+def get_post(request: Request, post_id: int) -> dict:
     for post in posts:
         if post["id"] == post_id:
             return post
