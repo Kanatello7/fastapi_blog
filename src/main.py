@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from schemas import PostCreate, PostResponse
+from src.schemas import PostCreate, PostResponse
 
 app = FastAPI()
 
