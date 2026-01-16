@@ -69,8 +69,6 @@ posts: list[dict] = [
     },
 ]
 
-id_counter =3 
-
 @app.get(
     "/posts/{post_id}",
     include_in_schema=False
@@ -86,7 +84,7 @@ def post_page(request: Request, post_id: int):
 
 
 @app.get("/api/posts/{post_id}", response_model=PostResponse)
-def get_post(request: Request, post_id: int) -> dict:
+def get_post(post_id: int) -> dict:
     for post in posts:
         if post["id"] == post_id:
             return post
