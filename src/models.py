@@ -1,0 +1,42 @@
+from datetime import datetime
+from typing import TYPE_CHECKING
+from uuid import UUID, uuid4
+
+from sqlalchemy import UUID as PG_UUID
+from sqlalchemy import DateTime, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from src.db import Base, CreatedAt, UpdatedAt
+
+if TYPE_CHECKING:
+    from src.posts.models import Post
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), primary_key=True, default=uuid4
+    )
+    username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
+    password: Mapped[str] = mapped_column(String, nullable=False)
+    last_login: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=None, nullable=True
+    )
+    image_file: Mapped[str | None] = mapped_column(
+        String(200),
+        nullable=True,
+        default=None,
+    )
+
+    created_at: Mapped[CreatedAt]
+    updated_at: Mapped[UpdatedAt]
+
+    posts: Mapped[list["Post"]] = relationship(back_populates="author")
+
+    @property
+    def image_path(self) -> str:
+        if self.image_file:
+            return f"/media/profile_pics/{self.image_file}"
+        return "/static/profile_pics/default.jpg"
