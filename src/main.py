@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from src.auth.router import api_router as auth_router
 from src.posts.router import api_router as api_posts_router
 from src.posts.router import template_router as template_posts_router
 
@@ -11,7 +12,11 @@ app = FastAPI()
 
 app.include_router(api_posts_router, prefix="/api/posts", tags=["posts"])
 app.include_router(template_posts_router, prefix="/posts")
+app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/media", StaticFiles(directory="media"), name="media")
+
 templates = Jinja2Templates(directory="templates")
 
 

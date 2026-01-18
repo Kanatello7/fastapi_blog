@@ -18,7 +18,7 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_factory() as session:
         try:
             yield session
-        except Exception:
+        finally:
             await session.close()
 
 

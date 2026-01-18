@@ -1,0 +1,71 @@
+from datetime import UTC, datetime, timedelta
+
+import jwt
+from fastapi import HTTPException, status
+
+from src.auth.conf import settings
+from src.auth.repository import AuthRepository
+from src.auth.schemas import Token
+from src.auth.utils import hash_password, verify_password
+from src.models import User
+
+
+class AuthService:
+    def __init__(self, repo: AuthRepository) -> None:
+        self.repository = repo
+
+    async def authenticate_user(self, username, password) -> None | User:
+        user = await self.repository.find_user(username=username)
+        if not user:
+            return None
+        if not verify_password(password, user.password):
+            raise HTTPException(
+                status_code=status.HTTP_417_EXPECTATION_FAILED,
+                detail="username or password is incorrect",
+            )
+        return user
+
+    def get_access_token(self, user: User) -> str:
+        payload = {
+            "sub": user.username,
+            "iat": datetime.now(UTC),
+            "exp": datetime.now(UTC)
+            + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRES_IN_MINUTES),
+            "typ": "access",
+        }
+        access_token = jwt.encode(
+            payload, key=settings.SECRET_KEY, algorithm=settings.ALGORITHM
+        )
+        return access_token
+
+    def get_refresh_token(self, user: User) -> str:
+        payload = {
+            "sub": user.username,
+            "iat": datetime.now(UTC),
+            "exp": datetime.now(UTC)
+            + timedelta(days=settings.REFRESH_TOKEN_EXPIRES_IN_DAYS),
+            "typ": "refresh",
+        }
+        refresh_token = jwt.encode(
+            payload, key=settings.SECRET_KEY, algorithm=settings.ALGORITHM
+        )
+        return refresh_token
+
+    def get_tokens(self, user: User) -> Token:
+        access_token = self.get_access_token(user)
+        refresh_token = self.get_refresh_token(user)
+        return Token(access_token=access_token, refresh_token=refresh_token)
+
+    async def register_user(self, new_user: dict) -> User:
+        user_exists = await self.repository.find_user(username=new_user["username"])
+        if user_exists:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="user with that username already exists",
+            )
+
+        hashed_password = hash_password(new_user["password"])
+        new_user["password"] = hashed_password
+
+        user = await self.repository.create_user(new_user)
+        return user

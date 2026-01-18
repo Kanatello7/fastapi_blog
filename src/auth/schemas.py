@@ -18,3 +18,9 @@ class UserResponse(UserBase):
     id: UUID
     image_file: str | None
     image_path: str
+
+
+class Token(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
