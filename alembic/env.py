@@ -3,6 +3,7 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
+from src.auth.models import RefreshToken
 from src.conf import settings
 from src.db import Base
 from src.models import User

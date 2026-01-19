@@ -23,7 +23,7 @@ async def login(
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    return service.get_tokens(user)
+    return await service.get_tokens(user)
 
 
 @api_router.post(
@@ -32,6 +32,10 @@ async def login(
 async def register(new_user: UserCreate, service: AuthServiceDep):
     user = await service.register_user(new_user.model_dump())
     return user
+
+@api_router.post("/refresh")
+async def refresh():
+    pass 
 
 
 async def get_current_user(

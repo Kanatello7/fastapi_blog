@@ -1,3 +1,5 @@
+import hashlib
+import secrets
 from datetime import UTC, datetime, timedelta
 
 import jwt
@@ -38,22 +40,20 @@ class AuthService:
         )
         return access_token
 
-    def get_refresh_token(self, user: User) -> str:
-        payload = {
-            "sub": user.username,
-            "iat": datetime.now(UTC),
-            "exp": datetime.now(UTC)
-            + timedelta(days=settings.REFRESH_TOKEN_EXPIRES_IN_DAYS),
-            "typ": "refresh",
+    async def get_refresh_token(self, user: User) -> str:
+        refresh_token = secrets.token_urlsafe(64)
+        hashed = hashlib.sha256(refresh_token.encode()).hexdigest()
+        token_data = {
+            "token": hashed,
+            "user_id": user.id,
+            "expires_at": datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRES_IN_DAYS)
         }
-        refresh_token = jwt.encode(
-            payload, key=settings.SECRET_KEY, algorithm=settings.ALGORITHM
-        )
-        return refresh_token
-
-    def get_tokens(self, user: User) -> Token:
+        await self.repository.save_refresh_token(token_data)
+        return refresh_token 
+    
+    async def get_tokens(self, user: User) -> Token:
         access_token = self.get_access_token(user)
-        refresh_token = self.get_refresh_token(user)
+        refresh_token = await self.get_refresh_token(user)
         return Token(access_token=access_token, refresh_token=refresh_token)
 
     async def register_user(self, new_user: dict) -> User:

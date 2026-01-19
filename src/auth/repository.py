@@ -1,6 +1,7 @@
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.auth.models import RefreshToken
 from src.models import User
 from src.posts.models import Post
 
@@ -24,5 +25,16 @@ class AuthRepository:
         return new_user
         # Core Style
         # stmt = insert(self.model).values(**data).returning(self.model)
+        # result = await self.session.execute(stmt)
+        # return result.scalar_one()
+
+    async def save_refresh_token(self, token_data: dict) -> RefreshToken:
+        new_token = RefreshToken(**token_data)
+        self.session.add(new_token)
+        await self.session.commit()
+        await self.session.refresh(new_token)
+        return new_token
+        # Core Style
+        # stmt = insert(self.model).values(**token_data).returning(self.model)
         # result = await self.session.execute(stmt)
         # return result.scalar_one()
