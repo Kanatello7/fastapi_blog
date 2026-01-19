@@ -7,7 +7,7 @@ from jwt.exceptions import InvalidTokenError
 
 from src.auth.conf import settings
 from src.auth.dependencies import AuthRepositoryDep, AuthServiceDep
-from src.auth.schemas import Token, UserCreate, UserResponse
+from src.auth.schemas import RefreshToken, Token, UserCreate, UserResponse
 from src.models import User
 
 api_router = APIRouter()
@@ -33,9 +33,9 @@ async def register(new_user: UserCreate, service: AuthServiceDep):
     user = await service.register_user(new_user.model_dump())
     return user
 
-@api_router.post("/refresh")
-async def refresh():
-    pass 
+@api_router.post("/refresh", response_model=Token)
+async def refresh(req: RefreshToken, service: AuthServiceDep):
+    return await service.refresh(req.refresh_token)
 
 
 async def get_current_user(

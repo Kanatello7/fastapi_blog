@@ -1,4 +1,6 @@
-from sqlalchemy import insert, select
+from datetime import UTC, datetime
+
+from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.models import RefreshToken
@@ -38,3 +40,14 @@ class AuthRepository:
         # stmt = insert(self.model).values(**token_data).returning(self.model)
         # result = await self.session.execute(stmt)
         # return result.scalar_one()
+    
+    async def get_refresh_token(self, *args, **kwargs) -> RefreshToken:
+        query = select(RefreshToken).filter(*args).filter_by(**kwargs).limit(1)
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
+    
+    async def revoke_token(self, token: RefreshToken) -> RefreshToken:
+        token.revoked_at = datetime.now(UTC)
+        await self.session.commit()
+        await self.session.refresh(token)
+        return token

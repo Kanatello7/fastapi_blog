@@ -69,3 +69,22 @@ class AuthService:
 
         user = await self.repository.create_user(new_user)
         return user
+
+    async def refresh(self, refresh_token: str) -> Token:
+        hashed = hashlib.sha256(refresh_token.encode()).hexdigest()
+        token = await self.repository.get_refresh_token(token=hashed)
+        if not token:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="refresh_token is invalid")
+        
+        if token.revoked_at is not None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="refresh_token is invalid")
+
+        if token.expires_at < datetime.now(UTC):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="refresh_token is invalid")
+
+        user = await self.repository.find_user(id=token.user_id)
+        if user is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="refresh_token is invalid")
+        access_token = await self.get_tokens(user)
+        await self.repository.revoke_token(token)
+        return access_token
