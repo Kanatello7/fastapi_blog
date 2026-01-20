@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import select, text
+from sqlalchemy import delete, insert, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.posts.models import Post
@@ -28,22 +28,19 @@ class PostRepository:
         return result.scalars().all()
 
     async def create_post(self, new_post: dict) -> Post:
-        stmt = text(
-            f"INSERT INTO posts(author, title, content) VALUES({new_post['author']}, {new_post['title'], {new_post['content']}}) RETURNING *;"
-        )
+        stmt = insert(self.model).values(**new_post).returning(self.model)
         result = await self.session.execute(stmt)
         await self.session.commit()
-        return result.scalar_one()
+        return result.scalar_one_or_none()
 
     async def update_post(self, post_id: UUID, updated_post: dict) -> Post:
-        stmt = text(
-            f"UPDATE posts SET author={updated_post['author']}, title={updated_post['title']}, content={updated_post['content']} WHERE id={post_id};"
-        )
+        stmt = update(self.model).values(**updated_post).where(self.model.id== post_id).returning(self.model)
         result = await self.session.execute(stmt)
         await self.session.commit()
-        return result.scalar_one()
+        return result.scalar_one_or_none()
 
-    async def delete_post(self, post_id: UUID):
-        stmt = text(f"DELETE posts WHERE id={post_id};")
-        await self.session.execute(stmt)
+    async def delete_post(self, post_id: UUID, user_id: UUID):
+        stmt = delete(self.model).where(self.model.id == post_id).returning(self.model)
+        result = await self.session.execute(stmt)
         await self.session.commit()
+        return result.scalar_one_or_none()

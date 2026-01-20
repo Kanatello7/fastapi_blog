@@ -12,12 +12,16 @@ class PostBase(BaseModel):
 
 
 class PostCreate(PostBase):
-    user_id: UUID
+    pass
 
+class PostUpdate(PostBase):
+    pass 
 
 class PostResponse(PostBase):
     model_config = ConfigDict(from_attributes=True)
-    id: int
+    id: UUID
     user_id: UUID
     date_posted: datetime
+    created_at: datetime
+    updated_at: datetime
     author: UserResponse

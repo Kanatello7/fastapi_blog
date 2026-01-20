@@ -7,7 +7,7 @@ from fastapi.templating import Jinja2Templates
 from src.auth.dependencies import get_current_user
 from src.models import User
 from src.posts.dependencies import PostServiceDep
-from src.posts.schemas import PostCreate, PostResponse
+from src.posts.schemas import PostCreate, PostResponse, PostUpdate
 
 template_router = APIRouter()
 api_router = APIRouter()
@@ -47,20 +47,34 @@ async def get_post(post_id: UUID, service: PostServiceDep, user: Annotated[User,
 async def get_posts(service: PostServiceDep, user: Annotated[User, Depends(get_current_user)]):
     return await service.get_user_posts(user.id)
 
+@api_router.post(
+    "/",
+    response_model=PostResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_post(post: PostCreate, service: PostServiceDep, user: Annotated[User, Depends(get_current_user)]):
+    new_post_data = post.model_dump()
+    new_post_data["user_id"] = user.id
+    new_post = await service.create_post(new_post_data)
+    return new_post
 
-# @api_router.post(
-#     "/",
-#     response_model=PostResponse,
-#     status_code=status.HTTP_201_CREATED,
-# )
-# def create_post(post: PostCreate):
-#     new_id = max(p["id"] for p in posts) + 1 if posts else 1
-#     new_post = {
-#         "id": new_id,
-#         "author": post.author,
-#         "title": post.title,
-#         "content": post.content,
-#         "date_posted": "April 23, 2025",
-#     }
-#     posts.routerend(new_post)
-#     return new_post
+@api_router.put(
+    "/{post_id}",
+    response_model=PostResponse,
+    status_code=status.HTTP_200_OK
+)
+async def update_post(post_id: UUID, post: PostUpdate, service: PostServiceDep, user: Annotated[User, Depends(get_current_user)]):
+    new_post_data = post.model_dump()
+    new_post_data["user_id"] = user.id
+    new_post = await service.update_post(post_id, new_post_data)
+    return new_post
+
+
+@api_router.delete(
+    "/{post_id}",
+    response_model=PostResponse,
+    status_code=status.HTTP_200_OK
+)
+async def delete_post(post_id: UUID, service: PostServiceDep, user: Annotated[User, Depends(get_current_user)]):
+    await service.delete_post(post_id, user.id)
+    
