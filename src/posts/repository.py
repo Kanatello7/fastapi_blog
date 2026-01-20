@@ -1,24 +1,31 @@
 from uuid import UUID
 
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from posts.models import Post
+from src.posts.models import Post
 
 
 class PostRepository:
+    model = Post
+
     def __init__(self, session: AsyncSession):
         self.session = session
 
     async def get_posts(self) -> list[Post]:
-        query = text("SELECT * FROM posts ORDER BY date_posted DESC;")
-        results = await self.session.execute(query)
-        return results.scalars().all()
+        query = select(self.model)
+        result = await self.session.execute(query)
+        return result.scalars().all()
 
-    async def get_post(self, post_id: UUID) -> Post:
-        query = text(f"SELECT * FROM posts WHERE id={post_id};")
+    async def get_post(self, *args, **kwargs) -> Post:
+        query = select(self.model).filter(*args).filter_by(**kwargs).limit(1)
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
+
+    async def get_user_posts(self, user_id: UUID) -> list[Post]:
+        query = select(self.model).where(self.model.user_id == user_id)
+        result = await self.session.execute(query)
+        return result.scalars().all()
 
     async def create_post(self, new_post: dict) -> Post:
         stmt = text(
