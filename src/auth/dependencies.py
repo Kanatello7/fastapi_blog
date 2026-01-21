@@ -3,7 +3,7 @@ from typing import Annotated
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jwt.exceptions import InvalidTokenError
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 
 from src.auth.conf import settings
 from src.auth.repository import AuthRepository
@@ -45,6 +45,10 @@ async def get_current_user(
         username = payload.get("sub")
         if username is None:
             raise credentials_exception
+        if payload.get("typ") != "access":
+            raise credentials_exception
+    except ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
     except InvalidTokenError:
         raise credentials_exception
     user = await repo.find_user(username=username)

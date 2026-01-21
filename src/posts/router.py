@@ -72,8 +72,7 @@ async def update_post(post_id: UUID, post: PostUpdate, service: PostServiceDep, 
 
 @api_router.delete(
     "/{post_id}",
-    response_model=PostResponse,
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_204_NO_CONTENT
 )
 async def delete_post(post_id: UUID, service: PostServiceDep, user: Annotated[User, Depends(get_current_user)]):
     await service.delete_post(post_id, user.id)
