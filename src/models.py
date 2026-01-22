@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from src.auth.models import RefreshToken
     from src.posts.models import Post
 
+
 class User(Base):
     __tablename__ = "users"
 
@@ -35,7 +36,9 @@ class User(Base):
     updated_at: Mapped[UpdatedAt]
 
     posts: Mapped[list["Post"]] = relationship(back_populates="author")
-    refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
 
     @property
     def image_path(self) -> str:

@@ -17,7 +17,7 @@ class PostRepository:
         result = await self.session.execute(query)
         return result.scalars().all()
 
-    async def get_post(self, *args, **kwargs) -> Post:
+    async def get_post(self, *args, **kwargs) -> Post | None:
         query = select(self.model).filter(*args).filter_by(**kwargs).limit(1)
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
@@ -33,14 +33,26 @@ class PostRepository:
         await self.session.commit()
         return result.scalar_one_or_none()
 
-    async def update_post(self, post_id: UUID, updated_post: dict) -> Post:
-        stmt = update(self.model).values(**updated_post).where(self.model.id== post_id).returning(self.model)
+    async def update_post(
+        self, post_id: UUID, user_id: UUID, data: dict
+    ) -> Post:
+        updated_post = {k:v for k, v in data.items() if v is not None}
+        stmt = (
+            update(self.model)
+            .values(**updated_post)
+            .where(self.model.id == post_id, self.model.user_id == user_id)
+            .returning(self.model)
+        )
         result = await self.session.execute(stmt)
         await self.session.commit()
         return result.scalar_one_or_none()
 
     async def delete_post(self, post_id: UUID, user_id: UUID):
-        stmt = delete(self.model).where(self.model.id == post_id).returning(self.model)
+        stmt = (
+            delete(self.model)
+            .where(self.model.id == post_id, self.model.user_id == user_id)
+            .returning(self.model)
+        )
         result = await self.session.execute(stmt)
         await self.session.commit()
         return result.scalar_one_or_none()

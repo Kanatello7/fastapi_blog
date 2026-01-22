@@ -41,11 +41,12 @@ class AuthService:
         token_data = {
             "token": hashed,
             "user_id": user.id,
-            "expires_at": datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRES_IN_DAYS)
+            "expires_at": datetime.now(UTC)
+            + timedelta(days=settings.REFRESH_TOKEN_EXPIRES_IN_DAYS),
         }
         await self.repository.save_refresh_token(token_data)
-        return refresh_token 
-    
+        return refresh_token
+
     async def get_tokens(self, user: User) -> Token:
         access_token = self.get_access_token(user)
         refresh_token = await self.get_refresh_token(user)
@@ -59,7 +60,7 @@ class AuthService:
         user_exists = await self.repository.find_user(email=new_user["email"])
         if user_exists:
             return None
-        
+
         hashed_password = hash_password(new_user["password"])
         new_user["password"] = hashed_password
 
@@ -71,15 +72,15 @@ class AuthService:
         token = await self.repository.get_refresh_token(token=hashed)
         if not token:
             return None
-        
+
         if token.revoked_at is not None:
             return None
 
         if token.expires_at.astimezone(UTC) < datetime.now(UTC):
             return None
 
-        return token 
-    
+        return token
+
     async def refresh(self, refresh_token: str) -> Token:
         token = await self.get_token_from_db(refresh_token)
         user = await self.repository.find_user(id=token.user_id)
@@ -88,7 +89,7 @@ class AuthService:
         access_token = await self.get_tokens(user)
         await self.repository.revoke_token(token)
         return access_token
-    
+
     async def revoke_token(self, refresh_token: str) -> Token:
         token = await self.get_token_from_db(refresh_token)
         if not token:
