@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import UUID as PG_UUID
-from sqlalchemy import DateTime, String
+from sqlalchemy import Boolean, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.db import Base, CreatedAt, UpdatedAt
@@ -24,6 +24,7 @@ class User(Base):
     last_login: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=None, nullable=True
     )
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     image_file: Mapped[str | None] = mapped_column(
         String(200),
         nullable=True,

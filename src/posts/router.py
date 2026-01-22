@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.templating import Jinja2Templates
 
-from src.auth.dependencies import get_current_user
+from src.auth.dependencies import get_current_user, require_admin
 from src.models import User
 from src.posts.dependencies import PostServiceDep
 from src.posts.schemas import PostCreate, PostResponse, PostUpdate
@@ -12,6 +12,13 @@ from src.posts.schemas import PostCreate, PostResponse, PostUpdate
 template_router = APIRouter()
 api_router = APIRouter()
 templates = Jinja2Templates(directory="templates")
+
+
+## Admin routes
+@api_router.get("/all", response_model=list[PostResponse])
+async def get_all_posts(service: PostServiceDep, user: Annotated[User, Depends(require_admin)]):
+    return await service.get_posts()
+
 
 @template_router.get("/{post_id}", include_in_schema=False)
 async def post_page(request: Request, post_id: UUID, service: PostServiceDep, user: Annotated[User, Depends(get_current_user)]):
@@ -26,7 +33,6 @@ async def post_page(request: Request, post_id: UUID, service: PostServiceDep, us
 
 
 @template_router.get("/", include_in_schema=False, name="home")
-@template_router.get("/", include_in_schema=False, name="posts")
 async def home(request: Request, service: PostServiceDep, user: Annotated[User, Depends(get_current_user)]) -> str:
     posts = await service.get_user_posts(user.id)
     return templates.TemplateResponse(
@@ -76,4 +82,3 @@ async def update_post(post_id: UUID, post: PostUpdate, service: PostServiceDep, 
 )
 async def delete_post(post_id: UUID, service: PostServiceDep, user: Annotated[User, Depends(get_current_user)]):
     await service.delete_post(post_id, user.id)
-    

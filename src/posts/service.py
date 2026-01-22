@@ -11,6 +11,9 @@ class PostService:
     async def get_post(self, *args, **kwargs) -> Post:
         return await self.repository.get_post(*args, **kwargs)
 
+    async def get_posts(self) -> list[Post]:
+        return await self.repository.get_posts()
+
     async def get_user_posts(self, user_id: UUID):
         return await self.repository.get_user_posts(user_id)
     
