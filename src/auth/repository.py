@@ -51,3 +51,9 @@ class AuthRepository:
         await self.session.commit()
         await self.session.refresh(token)
         return token
+    
+    async def set_user_login_time(self, user: User):
+        user.last_login = datetime.now(UTC)
+        await self.session.commit()
+        await self.session.refresh(user)
+        

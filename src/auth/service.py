@@ -49,6 +49,7 @@ class AuthService:
     async def get_tokens(self, user: User) -> Token:
         access_token = self.get_access_token(user)
         refresh_token = await self.get_refresh_token(user)
+        await self.repository.set_user_login_time(user)
         return Token(access_token=access_token, refresh_token=refresh_token)
 
     async def register_user(self, new_user: dict) -> User:

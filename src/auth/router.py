@@ -24,6 +24,7 @@ async def login(
         raise InvalidCredentialsException
 
     return await service.get_tokens(user)
+    
 
 
 @api_router.post(
