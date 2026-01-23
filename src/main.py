@@ -5,11 +5,16 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from src.auth.router import api_router as auth_router
+from src.conf import settings
 from src.posts.router import admin_router as admin_posts_router
 from src.posts.router import api_router as api_posts_router
 from src.posts.router import template_router as template_posts_router
 
-app = FastAPI()
+app = FastAPI(
+    docs_url=None if settings.PRODUCTION else "/docs",
+    redoc_url=None if settings.PRODUCTION else "/redoc",
+    openapi_url=None if settings.PRODUCTION else "/openapi.json", 
+)
 
 app.include_router(api_posts_router, prefix="/api/posts", tags=["posts"])
 app.include_router(template_posts_router, prefix="/posts")
