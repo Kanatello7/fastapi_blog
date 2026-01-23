@@ -283,6 +283,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyjwt" },
     { name = "sqlalchemy" },
+    { name = "uvloop" },
 ]
 
 [package.metadata]
@@ -295,6 +296,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "sqlalchemy", specifier = ">=2.0.45" },
+    { name = "uvloop", specifier = ">=0.22.1" },
 ]
 
 [[package]]
