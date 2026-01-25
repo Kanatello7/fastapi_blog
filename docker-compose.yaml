@@ -11,6 +11,7 @@ services:
       - .env
     environment:
       DB_HOST: postgres
+      REDIS_HOST: redis 
     restart: always
     depends_on:
       postgres:
@@ -58,6 +59,14 @@ services:
       timeout: 5s
       retries: 5
       start_period: 5s
+  redis_gui:
+    image: redislabs/redisinsight:latest
+    container_name: fastapi_blog-redis_gui
+    ports:
+      - "5540:5540"
+    networks:
+      - fastapi_blog
+    restart: always
 
 volumes:
   db-data:

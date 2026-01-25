@@ -1,4 +1,6 @@
-from fastapi import FastAPI, HTTPException, Request, status
+from contextlib import asynccontextmanager
+
+from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -6,20 +8,46 @@ from fastapi.templating import Jinja2Templates
 
 from src.auth.router import api_router as auth_router
 from src.conf import settings
+from src.logging_conf import logger
 from src.posts.router import admin_router as admin_posts_router
 from src.posts.router import api_router as api_posts_router
 from src.posts.router import template_router as template_posts_router
+from src.rate_limiter import get_redis, rate_limiter_auth, rate_limiter_posts
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    redis = get_redis()
+    await redis.ping()
+    logger.info("Redis connection open")
+    yield
+    await redis.aclose()
+    logger.info("Redis connection closed")
+
 
 app = FastAPI(
     docs_url=None if settings.PRODUCTION else "/docs",
     redoc_url=None if settings.PRODUCTION else "/redoc",
-    openapi_url=None if settings.PRODUCTION else "/openapi.json", 
+    openapi_url=None if settings.PRODUCTION else "/openapi.json",
+    lifespan=lifespan,
 )
 
-app.include_router(api_posts_router, prefix="/api/posts", tags=["posts"])
-app.include_router(template_posts_router, prefix="/posts")
+app.include_router(
+    api_posts_router,
+    prefix="/api/posts",
+    tags=["posts"],
+    dependencies=[Depends(rate_limiter_posts)],
+)
+app.include_router(
+    template_posts_router, prefix="/posts", dependencies=[Depends(rate_limiter_posts)]
+)
 app.include_router(admin_posts_router, prefix="/api/posts/admin", tags=["admin"])
-app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
+app.include_router(
+    auth_router,
+    prefix="/api/auth",
+    tags=["auth"],
+    dependencies=[Depends(rate_limiter_auth)],
+)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/media", StaticFiles(directory="media"), name="media")
