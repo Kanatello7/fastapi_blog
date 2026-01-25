@@ -1,0 +1,68 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    container_name: fastapi_blog-app
+    ports:
+      - "8000:8000"
+    entrypoint: ["./start_app.sh"]
+    env_file:
+      - .env
+    environment:
+      DB_HOST: postgres
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - fastapi_blog
+
+  postgres:
+    image: postgres:16
+    container_name: fastapi_blog-postgres
+    ports:
+      - "8081:5432"
+    env_file:
+      - .env
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - fastapi_blog
+    restart: always
+    environment:
+      POSTGRES_DB: blog
+      POSTGRES_USER: postgres 
+      POSTGRES_PASSWORD: postgres
+      TZ: Asia/Almaty
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  redis:
+    image: redis:7-alpine
+    container_name: fastapi_blog-redis
+    ports:
+      - "8082:6379"
+    networks:
+      - fastapi_blog
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  db-data:
+
+networks:
+  fastapi_blog:
+    name: fastapi_blog
+    driver: bridge
