@@ -279,6 +279,7 @@ dependencies = [
     { name = "argon2-cffi" },
     { name = "asyncpg" },
     { name = "fastapi", extra = ["standard"] },
+    { name = "gunicorn" },
     { name = "passlib" },
     { name = "pydantic" },
     { name = "pyjwt" },
@@ -293,6 +294,7 @@ requires-dist = [
     { name = "argon2-cffi", specifier = ">=25.1.0" },
     { name = "asyncpg", specifier = ">=0.31.0" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.128.0" },
+    { name = "gunicorn", specifier = ">=24.1.1" },
     { name = "passlib", specifier = ">=1.7.4" },
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "pyjwt", specifier = ">=2.10.1" },
@@ -441,6 +443,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/57/b9/f8025d71a6085c441a7eaff0fd928bbb275a6633773667023d19179fe815/greenlet-3.3.0-cp314-cp314t-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:3c6e9b9c1527a78520357de498b0e709fb9e2f49c3a513afd5a249007261911b", size = 653783, upload-time = "2025-12-04T14:26:06.225Z" },
     { url = "https://files.pythonhosted.org/packages/f6/c7/876a8c7a7485d5d6b5c6821201d542ef28be645aa024cfe1145b35c120c1/greenlet-3.3.0-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:286d093f95ec98fdd92fcb955003b8a3d054b4e2cab3e2707a5039e7b50520fd", size = 1614857, upload-time = "2025-12-04T15:04:28.484Z" },
     { url = "https://files.pythonhosted.org/packages/4f/dc/041be1dff9f23dac5f48a43323cd0789cb798342011c19a248d9c9335536/greenlet-3.3.0-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:6c10513330af5b8ae16f023e8ddbfb486ab355d04467c4679c5cfe4659975dd9", size = 1676034, upload-time = "2025-12-04T14:27:33.531Z" },
+]
+
+[[package]]
+name = "gunicorn"
+version = "24.1.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "packaging" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/78/0a/10739c03537ec5b131a867bf94df2e412b437696c7e5d26970e2198a80d2/gunicorn-24.1.1.tar.gz", hash = "sha256:f006d110e5cb3102859b4f5cd48335dbd9cc28d0d27cd24ddbdafa6c60929408", size = 287567, upload-time = "2026-01-24T01:15:31.359Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/96/90/cfe637677916fc6f53cd2b05d5746e249f683e1fa14c9e745a88c66f7290/gunicorn-24.1.1-py3-none-any.whl", hash = "sha256:757f6b621fc4f7581a90600b2cd9df593461f06a41d7259cb9b94499dc4095a8", size = 114920, upload-time = "2026-01-24T01:15:29.656Z" },
 ]
 
 [[package]]
@@ -624,6 +638,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d6/54/cfe61301667036ec958cb99bd3efefba235e65cdeb9c84d24a8293ba1d90/mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba", size = 8729, upload-time = "2022-08-14T12:40:10.846Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8", size = 9979, upload-time = "2022-08-14T12:40:09.779Z" },
+]
+
+[[package]]
+name = "packaging"
+version = "26.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/65/ee/299d360cdc32edc7d2cf530f3accf79c4fca01e96ffc950d8a52213bd8e4/packaging-26.0.tar.gz", hash = "sha256:00243ae351a257117b6a241061796684b084ed1c516a08c48a3f7e147a9d80b4", size = 143416, upload-time = "2026-01-21T20:50:39.064Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b7/b9/c538f279a4e237a006a2c98387d081e9eb060d203d8ed34467cc0f0b9b53/packaging-26.0-py3-none-any.whl", hash = "sha256:b36f1fef9334a5588b4166f8bcd26a14e521f2b55e6b9de3aaa80d3ff7a37529", size = 74366, upload-time = "2026-01-21T20:50:37.788Z" },
 ]
 
 [[package]]
