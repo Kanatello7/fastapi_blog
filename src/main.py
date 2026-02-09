@@ -12,16 +12,15 @@ from src.logging_conf import logger
 from src.posts.router import admin_router as admin_posts_router
 from src.posts.router import api_router as api_posts_router
 from src.posts.router import template_router as template_posts_router
-from src.rate_limiter import get_redis, rate_limiter_auth, rate_limiter_posts
+from src.rate_limiter import rate_limiter_auth, rate_limiter_posts, redis_manager
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    redis = get_redis()
-    await redis.ping()
+    await redis_manager.initialize()
     logger.info("Redis connection open")
     yield
-    await redis.aclose()
+    await redis_manager.close()
     logger.info("Redis connection closed")
 
 

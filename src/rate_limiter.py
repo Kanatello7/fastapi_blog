@@ -11,20 +11,38 @@ from src.logging_conf import logger
 _pool: ConnectionPool | None = None
 
 
-def get_redis_pool() -> ConnectionPool:
-    global _pool
-    if _pool is None:
-        _pool = ConnectionPool(
-            host=settings.REDIS_HOST,
-            port=settings.REDIS_PORT,
-            max_connections=10,
-            decode_responses=True,
-        )
-    return _pool
+class RedisManager:
+    def __init__(self):
+        self._pool: ConnectionPool | None = None
+
+    async def initialize(self):
+        if self._pool is None:
+            self._pool = ConnectionPool(
+                host=settings.REDIS_HOST,
+                port=settings.REDIS_PORT,
+                max_connections=50,
+                socket_connect_timeout=5,
+                socket_keepalive=True,
+                health_check_interval=30,
+                decode_responses=True,
+            )
+
+    async def close(self):
+        if self._pool:
+            await self._pool.disconnect()
+            self._pool = None
+
+    def get_client(self) -> Redis:
+        if not self._pool:
+            raise RuntimeError("Redis pool not initialized")
+        return Redis(connection_pool=self._pool)
+
+
+redis_manager = RedisManager()
 
 
 def get_redis() -> Redis:
-    return Redis(connection_pool=get_redis_pool())
+    return redis_manager.get_client
 
 
 class RateLimiter:
