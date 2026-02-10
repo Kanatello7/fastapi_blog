@@ -33,10 +33,8 @@ class PostRepository:
         await self.session.commit()
         return result.scalar_one_or_none()
 
-    async def update_post(
-        self, post_id: UUID, user_id: UUID, data: dict
-    ) -> Post:
-        updated_post = {k:v for k, v in data.items() if v is not None}
+    async def update_post(self, post_id: UUID, user_id: UUID, data: dict) -> Post:
+        updated_post = {k: v for k, v in data.items() if v is not None}
         stmt = (
             update(self.model)
             .values(**updated_post)

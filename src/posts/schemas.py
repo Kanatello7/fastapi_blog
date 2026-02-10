@@ -19,6 +19,7 @@ class PostUpdate(PostBase):
     title: str | None = Field(None, min_length=1, max_length=100)
     content: str | None = None
 
+
 class PostResponse(PostBase):
     model_config = ConfigDict(from_attributes=True)
     id: UUID

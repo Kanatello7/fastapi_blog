@@ -35,3 +35,25 @@ class Post(Base):
     updated_at: Mapped[UpdatedAt]
 
     author: Mapped["User"] = relationship(back_populates="posts")
+    comments: Mapped[list["Comment"]] = relationship(back_populates="post")
+
+
+class Comment(Base):
+    __tablename__ = "comments"
+
+    id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), primary_key=True, default=uuid4
+    )
+    author_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
+    )
+    post_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("posts.id"), nullable=False, index=True
+    )
+    content: Mapped[str] = mapped_column(Text(), nullable=False)
+
+    created_at: Mapped[CreatedAt]
+    updated_at: Mapped[UpdatedAt]
+
+    author: Mapped["User"] = relationship(back_populates="comments")
+    post: Mapped["Post"] = relationship(back_populates="comments")
