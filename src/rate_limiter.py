@@ -42,7 +42,7 @@ redis_manager = RedisManager()
 
 
 def get_redis() -> Redis:
-    return redis_manager.get_client
+    return redis_manager.get_client()
 
 
 class RateLimiter:
