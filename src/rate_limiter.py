@@ -105,3 +105,4 @@ def rate_limiter_factory(
 
 rate_limiter_auth = rate_limiter_factory(3, 10)
 rate_limiter_posts = rate_limiter_factory(5, 5)
+rate_limiter_comments = rate_limiter_factory(10, 5)

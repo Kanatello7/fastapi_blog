@@ -28,3 +28,24 @@ class PostResponse(PostBase):
     created_at: datetime
     updated_at: datetime
     author: UserResponse
+
+
+class CommentBase(BaseModel):
+    content: str
+
+
+class CommentCreate(CommentBase):
+    post_id: UUID
+
+
+class CommentUpdate(CommentBase):
+    content: str | None = None
+
+
+class CommentResponse(CommentBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    author_id: UUID
+    post_id: UUID
+    created_at: datetime
+    updated_at: datetime

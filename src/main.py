@@ -9,10 +9,15 @@ from fastapi.templating import Jinja2Templates
 from src.auth.router import api_router as auth_router
 from src.conf import settings
 from src.logging_conf import logger
-from src.posts.router import admin_router as admin_posts_router
-from src.posts.router import api_router as api_posts_router
-from src.posts.router import template_router as template_posts_router
-from src.rate_limiter import rate_limiter_auth, rate_limiter_posts, redis_manager
+from src.posts.api.comments import router as api_comments_router
+from src.posts.api.posts import api_router as api_posts_router
+from src.posts.api.posts import template_router as template_posts_router
+from src.rate_limiter import (
+    rate_limiter_auth,
+    rate_limiter_comments,
+    rate_limiter_posts,
+    redis_manager,
+)
 
 
 @asynccontextmanager
@@ -37,10 +42,17 @@ app.include_router(
     tags=["posts"],
     dependencies=[Depends(rate_limiter_posts)],
 )
+
+app.include_router(
+    api_comments_router,
+    prefix="/api/comments",
+    tags=["comments"],
+    dependencies=[Depends(rate_limiter_comments)],
+)
 app.include_router(
     template_posts_router, prefix="/posts", dependencies=[Depends(rate_limiter_posts)]
 )
-app.include_router(admin_posts_router, prefix="/api/posts/admin", tags=["admin"])
+
 app.include_router(
     auth_router,
     prefix="/api/auth",

@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from src.posts.models import Post
+from src.posts.models import Comment, Post
 from src.posts.repository import CommentRepository, PostRepository
-from src.posts.schemas import PostCreate, PostUpdate
+from src.posts.schemas import CommentCreate, CommentUpdate, PostCreate, PostUpdate
 
 
 class PostService:
@@ -40,3 +40,34 @@ class PostService:
 class CommentService:
     def __init__(self, repo: CommentRepository):
         self.repository = repo
+
+    async def get_comment(self, *args, **kwargs) -> Comment | None:
+        result = await self.repository.get_one_or_many(*args, **kwargs)
+        return result[0] if result else None
+
+    async def get_comments(self) -> list[Comment]:
+        return await self.repository.get_all()
+
+    async def get_user_comments(self, user_id: UUID):
+        return await self.repository.get_user_comments(user_id)
+
+    async def create_comment(self, data: CommentCreate, user_id: UUID):
+        new_data = data.model_dump()
+        new_data["author_id"] = user_id
+        return await self.repository.create(new_data)
+
+    async def update_comment(
+        self, comment_id: UUID, user_id: UUID, data: CommentUpdate
+    ):
+        new_data = data.model_dump()
+        new_data["author_id"] = user_id
+        result = await self.repository.update_one_or_more(
+            new_data, id=comment_id, author_id=user_id
+        )
+        return result[0] if result else None
+
+    async def delete_comment(self, comment_id: UUID, user_id: UUID):
+        result = await self.repository.delete_one_or_more(
+            id=comment_id, author_id=user_id
+        )
+        return result[0] if result else None

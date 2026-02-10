@@ -14,3 +14,18 @@ class PostAccessDeniedException(BaseAPIException):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="you don't have access to this post",
         )
+
+
+class CommentNotFoundException(BaseAPIException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Comment not found"
+        )
+
+
+class CommentAccessDeniedException(BaseAPIException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="you don't have access to this comment",
+        )

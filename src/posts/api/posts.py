@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Request, status
 from fastapi.templating import Jinja2Templates
 
-from src.auth.dependencies import get_current_user, require_admin
+from src.auth.dependencies import get_current_user
 from src.models import User
 from src.posts.dependencies import PostServiceDep
 from src.posts.exceptions import PostAccessDeniedException, PostNotFoundException
@@ -12,16 +12,7 @@ from src.posts.schemas import PostCreate, PostResponse, PostUpdate
 
 template_router = APIRouter()
 api_router = APIRouter()
-admin_router = APIRouter()
 templates = Jinja2Templates(directory="templates")
-
-
-## Admin routes
-@admin_router.get("/", response_model=list[PostResponse])
-async def get_all_posts(
-    service: PostServiceDep, user: Annotated[User, Depends(require_admin)]
-):
-    return await service.get_posts()
 
 
 @template_router.get("/{post_id}", include_in_schema=False)
@@ -102,10 +93,13 @@ async def update_post(
     return post
 
 
-@api_router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
+@api_router.delete("/{post_id}", status_code=status.HTTP_200_OK)
 async def delete_post(
     post_id: UUID,
     service: PostServiceDep,
     user: Annotated[User, Depends(get_current_user)],
 ):
-    await service.delete_post(post_id, user.id)
+    post = await service.delete_post(post_id, user.id)
+    if not post:
+        raise PostNotFoundException
+    return {"message": "successfully deleted"}
