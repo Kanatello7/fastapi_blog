@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 
@@ -11,4 +13,9 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRES_IN_DAYS: int
 
 
-settings = Settings()
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
+
+
+settings = get_settings()
