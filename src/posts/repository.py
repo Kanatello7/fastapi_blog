@@ -19,11 +19,15 @@ class PostRepository(CRUDRepository):
         query = (
             select(self.model)
             .where(self.model.id == post_id)
-            .options(selectinload(self.model.comments))
+            .options(
+                selectinload(self.model.comments),
+                selectinload(self.model.author),
+                selectinload(self.model.comments).selectinload(Comment.author),
+            )
         )
 
         result = await self.session.execute(query)
-        return result.scalars().all()
+        return result.scalar_one_or_none()
 
 
 class CommentRepository(CRUDRepository):

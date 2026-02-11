@@ -8,7 +8,7 @@ from src.auth.dependencies import get_current_user
 from src.models import User
 from src.posts.dependencies import PostServiceDep
 from src.posts.exceptions import PostAccessDeniedException, PostNotFoundException
-from src.posts.schemas import PostCreate, PostResponse, PostUpdate
+from src.posts.schemas import PostComments, PostCreate, PostResponse, PostUpdate
 
 template_router = APIRouter()
 api_router = APIRouter()
@@ -103,3 +103,13 @@ async def delete_post(
     if not post:
         raise PostNotFoundException
     return {"message": "successfully deleted"}
+
+
+@api_router.get(
+    "/{post_id}/comments", status_code=status.HTTP_200_OK, response_model=PostComments
+)
+async def post_with_comments(post_id: UUID, service: PostServiceDep):
+    post = await service.get_post_with_comments(post_id)
+    if not post:
+        raise PostNotFoundException
+    return post

@@ -49,3 +49,8 @@ class CommentResponse(CommentBase):
     post_id: UUID
     created_at: datetime
     updated_at: datetime
+    author: UserResponse
+
+
+class PostComments(PostResponse):
+    comments: list[CommentResponse]

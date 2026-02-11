@@ -36,6 +36,10 @@ class PostService:
         result = await self.repository.delete_one_or_more(id=post_id, user_id=user_id)
         return result[0] if result else None
 
+    async def get_post_with_comments(self, post_id: UUID):
+        result = await self.repository.get_post_with_comments(post_id=post_id)
+        return result
+
 
 class CommentService:
     def __init__(self, repo: CommentRepository):
