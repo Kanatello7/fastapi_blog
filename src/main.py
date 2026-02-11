@@ -90,9 +90,12 @@ def general_http_exception_handler(request: Request, exc: HTTPException):
 @app.exception_handler(RequestValidationError)
 def request_exception_handler(request: Request, exc: RequestValidationError):
     if request.url.path.startswith("/api"):
+        errors = [
+            {"loc": e["loc"], "msg": e["msg"], "type": e["type"]} for e in exc.errors()
+        ]
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            content={"detail": exc.errors()},
+            content={"detail": errors},
         )
     return templates.TemplateResponse(
         request,

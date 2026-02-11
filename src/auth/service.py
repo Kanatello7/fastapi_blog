@@ -63,7 +63,7 @@ class AuthService:
 
         hashed_password = hash_password(new_user["password"])
         new_user["password"] = hashed_password
-
+        del new_user["password_confirm"]
         user = await self.repository.create_user(new_user)
         return user
 
