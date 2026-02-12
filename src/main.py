@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from src.auth.router import api_router as auth_router
-from src.cache import redis_manager
+from src.cache import RedisError, redis_manager
 from src.conf import settings
 from src.logging_conf import logger
 from src.posts.api.comments import router as api_comments_router
@@ -35,6 +35,17 @@ app = FastAPI(
     openapi_url=None if settings.PRODUCTION else "/openapi.json",
     lifespan=lifespan,
 )
+
+
+@app.get("/health/redis", tags=["health"])
+async def redis_health():
+    try:
+        redis = redis_manager.get_client()
+        await redis.ping()
+        return {"status": "ok"}
+    except RedisError:
+        raise HTTPException(503, "Redis unavailable")
+
 
 app.include_router(
     api_posts_router,

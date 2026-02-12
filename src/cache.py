@@ -1,5 +1,7 @@
 import hashlib
 import json
+import random
+import zlib
 from functools import wraps
 from typing import Any, Callable
 
@@ -13,6 +15,7 @@ from src.logging_conf import logger
 class RedisManager:
     def __init__(self):
         self._pool: ConnectionPool | None = None
+        self._client: Redis | None = None
 
     async def initialize(self):
         if self._pool is None:
@@ -23,18 +26,20 @@ class RedisManager:
                 socket_connect_timeout=5,
                 socket_keepalive=True,
                 health_check_interval=30,
-                decode_responses=True,
+                decode_responses=False,
             )
+            self._client = Redis(connection_pool=self._pool)
 
     async def close(self):
         if self._pool:
             await self._pool.disconnect()
             self._pool = None
+            self._client = None
 
     def get_client(self) -> Redis:
-        if not self._pool:
-            raise RuntimeError("Redis pool not initialized")
-        return Redis(connection_pool=self._pool)
+        if not self._client:
+            raise RuntimeError("Redis  not initialized")
+        return self._client
 
 
 redis_manager = RedisManager()
@@ -89,20 +94,51 @@ def cache(
                 cached = await redis.get(key)
                 if cached is not None:
                     logger.debug("Cache HIT: %s", key)
-                    return json.loads(cached)
+                    await redis.incr(f"metrics:cache:hit:{namespace}")
+                    decompressed = zlib.decompress(cached).decode()
+                    return json.loads(decompressed)
             except RedisError:
                 logger.warning("Redis read error for key %s, falling throgh", key)
 
-            logger.debug("Cache MISS: %s", key)
-            response = await func(*args, **kwargs)
+            # Only one request computes; others wait
+            lock_key = f"lock:{key}"
+            lock = redis.lock(lock_key, timeout=10, blocking_timeout=5)
 
-            try:
-                serializable = _serialize(response, response_model)
-                encoded = json.dumps(serializable)
-                await redis.set(key, encoded, ex=exp)
-            except Exception:
-                logger.warning("Cache write failed for key %s", key, exc_info=True)
-            return response
+            if await lock.acquire(blocking=True):
+                try:
+                    # Double check
+                    cached = await redis.get(key)
+                    if cached is not None:
+                        logger.debug("Cache HIT: %s", key)
+                        await redis.incr(f"metrics:cache:hit:{namespace}")
+                        decompressed = zlib.decompress(cached).decode()
+                        return json.loads(decompressed)
+
+                    logger.debug("Cache MISS: %s", key)
+                    await redis.incr(f"metrics:cache:miss:{namespace}")
+                    response = await func(*args, **kwargs)
+
+                    serializable = _serialize(response, response_model)
+                    encoded = json.dumps(serializable)
+                    compressed = zlib.compress(encoded.encode())
+                    jittered_exp = exp + random.randint(0, exp // 10)
+                    await redis.set(key, compressed, ex=jittered_exp)
+
+                    return response
+                except Exception:
+                    logger.warning("Cache write failed for key %s", key, exc_info=True)
+                    return await func(*args, **kwargs)
+                finally:
+                    await lock.release()
+            else:
+                cached = await redis.get(key)
+                if cached is not None:
+                    logger.debug("Cache HIT: %s", key)
+                    await redis.incr(f"metrics:cache:hit:{namespace}")
+                    decompressed = zlib.decompress(cached).decode()
+                    return json.loads(decompressed)
+                await redis.incr(f"metrics:cache:miss:{namespace}")
+                return await func(*args, **kwargs)
 
         wrapper._cache_namespace = namespace
         wrapper._cache_key_params = key_params
