@@ -46,7 +46,12 @@ async def home(
 
 
 @api_router.get("/{post_id}", response_model=PostResponse)
-@cache(exp=300, namespace="post", key_params=["post_id", "user"], response_model=PostResponse)
+@cache(
+    exp=300,
+    namespace="post",
+    key_params=["post_id", "user"],
+    response_model=PostResponse,
+)
 async def get_post(
     post_id: UUID,
     service: PostServiceDep,
@@ -80,6 +85,8 @@ async def create_post(
 ):
     post = await service.create_post(post, user.id)
     await invalidate_for(get_posts, user=user)
+    return post
+
 
 @api_router.put(
     "/{post_id}", response_model=PostResponse, status_code=status.HTTP_200_OK
@@ -94,8 +101,11 @@ async def update_post(
     if not post:
         raise PostNotFoundException
     await invalidate_for(
-        get_posts, get_post, post_with_comments,
-        user=user, post_id=post_id,
+        get_posts,
+        get_post,
+        post_with_comments,
+        user=user,
+        post_id=post_id,
     )
     return post
 
@@ -110,8 +120,11 @@ async def delete_post(
     if not post:
         raise PostNotFoundException
     await invalidate_for(
-        get_posts, get_post, post_with_comments,
-        user=user, post_id=post_id,
+        get_posts,
+        get_post,
+        post_with_comments,
+        user=user,
+        post_id=post_id,
     )
     return {"message": "successfully deleted"}
 

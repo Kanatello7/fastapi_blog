@@ -46,12 +46,13 @@ redis_manager = RedisManager()
 def get_redis() -> Redis:
     return redis_manager.get_client()
 
+
 PREFIX = "cache"
+
 
 def _build_stable_key(
     func: Callable,
-    args: tuple,
-    kwargs: dict, 
+    kwargs: dict,
     key_params: list[str] | None,
     namespace: str,
 ) -> str:
@@ -60,7 +61,7 @@ def _build_stable_key(
         for k in key_params:
             if k in kwargs:
                 v = kwargs[k]
-                parts[k] = str(v.id) if hasattr(v, "id") else v 
+                parts[k] = str(v.id) if hasattr(v, "id") else v
     else:
         parts = {}
         for k, v in kwargs.items():
@@ -68,20 +69,24 @@ def _build_stable_key(
                 parts[k] = str(v.id)
             elif isinstance(v, EncodableT):
                 parts[k] = v
-    
+
     raw = json.dumps(parts, default=str, sort_keys=True)
     key_hash = hashlib.sha256(raw.encode()).hexdigest()[:16]
 
     return f"{PREFIX}:{namespace}:{func.__module__}.{func.__name__}:{key_hash}"
 
 
-
-def cache(exp=60, namespace:str = "default", key_params: list[str] | None = None, response_model=None):
+def cache(
+    exp=60,
+    namespace: str = "default",
+    key_params: list[str] | None = None,
+    response_model=None,
+):
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             redis: Redis = get_redis()
-            key = _build_stable_key(func, args, kwargs, key_params, namespace)
+            key = _build_stable_key(func, kwargs, key_params, namespace)
 
             try:
                 cached = await redis.get(key)
@@ -93,7 +98,7 @@ def cache(exp=60, namespace:str = "default", key_params: list[str] | None = None
 
             logger.info("Cache MISS: %s", key)
             response = await func(*args, **kwargs)
-            
+
             try:
                 serializable = _serialize(response, response_model)
                 encoded = json.dumps(serializable)
@@ -101,12 +106,14 @@ def cache(exp=60, namespace:str = "default", key_params: list[str] | None = None
             except RedisError:
                 logger.warning("Redis write error for key %s", key)
             return response
-        
+
         wrapper._cache_namespace = namespace
         wrapper._cache_key_params = key_params
         wrapper._cache_func = func
         return wrapper
+
     return decorator
+
 
 def _serialize(obj: Any, response_model=None) -> Any:
     from pydantic import BaseModel
@@ -119,6 +126,7 @@ def _serialize(obj: Any, response_model=None) -> Any:
         return obj.model_dump(mode="json")
     return jsonable_encoder(obj)
 
+
 async def invalidate_namespace(namespace: str) -> int:
     redis: Redis = get_redis()
     pattern = f"{PREFIX}:{namespace}:*"
@@ -127,16 +135,17 @@ async def invalidate_namespace(namespace: str) -> int:
     try:
         async for key in redis.scan_iter(pattern):
             await redis.delete(key)
-            deleted += 1 
+            deleted += 1
         logger.info("Invalidated %d keys in namespace '%s'", deleted, namespace)
     except RedisError:
         logger.warning("Failed to invalidate namespace '%s'", namespace)
-              
+
     return deleted
+
 
 async def invalidate_for(*cached_funcs, **kwargs) -> int:
     redis = get_redis()
-    deleted = 0 
+    deleted = 0
 
     for fn in cached_funcs:
         namespace = getattr(fn, "_cache_namespace", "default")
@@ -144,7 +153,7 @@ async def invalidate_for(*cached_funcs, **kwargs) -> int:
         original_func = getattr(fn, "_cache_func", fn)
 
         key = _build_stable_key(original_func, kwargs, key_params, namespace)
-        try: 
+        try:
             result = await redis.delete(key)
             if result:
                 deleted += result
