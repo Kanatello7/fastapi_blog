@@ -5,12 +5,9 @@ from typing import Any, Callable
 
 from fastapi.encoders import jsonable_encoder
 from redis.asyncio import ConnectionPool, Redis, RedisError
-from redis.typing import EncodableT
 
 from src.conf import settings
 from src.logging_conf import logger
-
-_pool: ConnectionPool | None = None
 
 
 class RedisManager:
@@ -67,7 +64,7 @@ def _build_stable_key(
         for k, v in kwargs.items():
             if hasattr(v, "id"):
                 parts[k] = str(v.id)
-            elif isinstance(v, EncodableT):
+            elif isinstance(v, (str, int, float, bool, type(None))):
                 parts[k] = v
 
     raw = json.dumps(parts, default=str, sort_keys=True)
@@ -91,20 +88,20 @@ def cache(
             try:
                 cached = await redis.get(key)
                 if cached is not None:
-                    logger.info("Cache HIT: %s", key)
+                    logger.debug("Cache HIT: %s", key)
                     return json.loads(cached)
             except RedisError:
                 logger.warning("Redis read error for key %s, falling throgh", key)
 
-            logger.info("Cache MISS: %s", key)
+            logger.debug("Cache MISS: %s", key)
             response = await func(*args, **kwargs)
 
             try:
                 serializable = _serialize(response, response_model)
                 encoded = json.dumps(serializable)
                 await redis.set(key, encoded, ex=exp)
-            except RedisError:
-                logger.warning("Redis write error for key %s", key)
+            except Exception:
+                logger.warning("Cache write failed for key %s", key, exc_info=True)
             return response
 
         wrapper._cache_namespace = namespace

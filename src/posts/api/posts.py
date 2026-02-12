@@ -132,7 +132,12 @@ async def delete_post(
 @api_router.get(
     "/{post_id}/comments", status_code=status.HTTP_200_OK, response_model=PostComments
 )
-@cache(exp=300, namespace="post_with_comments", key_params=["post_id"])
+@cache(
+    exp=300,
+    namespace="post_with_comments",
+    key_params=["post_id"],
+    response_model=PostComments,
+)
 async def post_with_comments(post_id: UUID, service: PostServiceDep):
     post = await service.get_post_with_comments(post_id)
     if not post:

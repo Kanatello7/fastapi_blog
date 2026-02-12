@@ -14,7 +14,7 @@ class RateLimiter:
         self._redis = redis
 
     async def is_limited(
-        self, ip_address: str, endpoint: str, max_requests: int, window_seconds
+        self, ip_address: str, endpoint: str, max_requests: int, window_seconds: int
     ) -> bool:
         try:
             key = f"rate_limiter:{endpoint}:{ip_address}"
@@ -53,7 +53,7 @@ def rate_limiter_factory(
         request: Request,
         rate_limiter: Annotated[RateLimiter, Depends(get_rate_limiter)],
     ):
-        ip_address = request.client.host
+        ip_address = request.client.host if request.client else "unknown"
         endpoint = request.url.path
         limited = await rate_limiter.is_limited(
             ip_address, endpoint, max_requests, window_seconds
