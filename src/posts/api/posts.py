@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Request, status
 from fastapi.templating import Jinja2Templates
 
 from src.auth.dependencies import get_current_user
+from src.cache import cache, invalidate_for, invalidate_namespace
 from src.models import User
 from src.posts.dependencies import PostServiceDep
 from src.posts.exceptions import PostAccessDeniedException, PostNotFoundException
@@ -45,6 +46,7 @@ async def home(
 
 
 @api_router.get("/{post_id}", response_model=PostResponse)
+@cache(exp=300, namespace="post", key_params=["post_id", "user"], response_model=PostResponse)
 async def get_post(
     post_id: UUID,
     service: PostServiceDep,
@@ -59,6 +61,7 @@ async def get_post(
 
 
 @api_router.get("/", response_model=list[PostResponse])
+@cache(exp=600, namespace="posts", key_params=["user"], response_model=PostResponse)
 async def get_posts(
     service: PostServiceDep, user: Annotated[User, Depends(get_current_user)]
 ):
@@ -75,8 +78,8 @@ async def create_post(
     service: PostServiceDep,
     user: Annotated[User, Depends(get_current_user)],
 ):
-    return await service.create_post(post, user.id)
-
+    post = await service.create_post(post, user.id)
+    await invalidate_for(get_posts, user=user)
 
 @api_router.put(
     "/{post_id}", response_model=PostResponse, status_code=status.HTTP_200_OK
@@ -90,6 +93,10 @@ async def update_post(
     post = await service.update_post(post_id, user.id, post)
     if not post:
         raise PostNotFoundException
+    await invalidate_for(
+        get_posts, get_post, post_with_comments,
+        user=user, post_id=post_id,
+    )
     return post
 
 
@@ -102,12 +109,17 @@ async def delete_post(
     post = await service.delete_post(post_id, user.id)
     if not post:
         raise PostNotFoundException
+    await invalidate_for(
+        get_posts, get_post, post_with_comments,
+        user=user, post_id=post_id,
+    )
     return {"message": "successfully deleted"}
 
 
 @api_router.get(
     "/{post_id}/comments", status_code=status.HTTP_200_OK, response_model=PostComments
 )
+@cache(exp=300, namespace="post_with_comments", key_params=["post_id"])
 async def post_with_comments(post_id: UUID, service: PostServiceDep):
     post = await service.get_post_with_comments(post_id)
     if not post:

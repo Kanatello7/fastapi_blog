@@ -3,46 +3,10 @@ from time import time
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request, status
-from redis.asyncio import ConnectionPool, Redis, RedisError
+from redis.asyncio import Redis, RedisError
 
-from src.conf import settings
+from src.cache import get_redis
 from src.logging_conf import logger
-
-_pool: ConnectionPool | None = None
-
-
-class RedisManager:
-    def __init__(self):
-        self._pool: ConnectionPool | None = None
-
-    async def initialize(self):
-        if self._pool is None:
-            self._pool = ConnectionPool(
-                host=settings.REDIS_HOST,
-                port=settings.REDIS_PORT,
-                max_connections=50,
-                socket_connect_timeout=5,
-                socket_keepalive=True,
-                health_check_interval=30,
-                decode_responses=True,
-            )
-
-    async def close(self):
-        if self._pool:
-            await self._pool.disconnect()
-            self._pool = None
-
-    def get_client(self) -> Redis:
-        if not self._pool:
-            raise RuntimeError("Redis pool not initialized")
-        return Redis(connection_pool=self._pool)
-
-
-redis_manager = RedisManager()
-
-
-def get_redis() -> Redis:
-    return redis_manager.get_client()
 
 
 class RateLimiter:

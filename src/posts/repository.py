@@ -11,7 +11,7 @@ class PostRepository(CRUDRepository):
     model = Post
 
     async def get_user_posts(self, user_id: UUID) -> list[Post]:
-        query = select(self.model).where(self.model.user_id == user_id)
+        query = select(self.model).where(self.model.user_id == user_id).options(selectinload(Post.author))
         result = await self.session.execute(query)
         return result.scalars().all()
 

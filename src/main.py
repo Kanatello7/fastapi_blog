@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from src.auth.router import api_router as auth_router
+from src.cache import redis_manager
 from src.conf import settings
 from src.logging_conf import logger
 from src.posts.api.comments import router as api_comments_router
@@ -16,7 +17,6 @@ from src.rate_limiter import (
     rate_limiter_auth,
     rate_limiter_comments,
     rate_limiter_posts,
-    redis_manager,
 )
 
 
