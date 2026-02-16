@@ -6,7 +6,12 @@ from fastapi import APIRouter, Depends, status
 from src.auth.dependencies import get_current_user
 from src.posts.dependencies import CommentServiceDep
 from src.posts.exceptions import CommentAccessDeniedException, CommentNotFoundException
-from src.posts.schemas import CommentCreate, CommentResponse, CommentUpdate
+from src.posts.schemas import (
+    CommentCreate,
+    CommentResponse,
+    CommentUpdate,
+    CommentWithChildren,
+)
 from src.users.models import User
 
 router = APIRouter()
@@ -71,3 +76,19 @@ async def delete_comment(
     if not comment:
         raise CommentNotFoundException
     return {"message": "successfully deleted"}
+
+
+@router.get(
+    "/{comment_id}/childrens",
+    status_code=status.HTTP_200_OK,
+    response_model=CommentWithChildren,
+)
+async def get_comments_with_childrens(
+    comment_id: UUID,
+    service: CommentServiceDep,
+    _: Annotated[User, Depends(get_current_user)],
+):
+    comment = await service.get_comments_with_children(comment_id=comment_id)
+    if not comment:
+        raise CommentNotFoundException
+    return comment

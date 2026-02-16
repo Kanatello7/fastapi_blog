@@ -2,7 +2,13 @@ from uuid import UUID
 
 from src.posts.models import Comment, Post
 from src.posts.repository import CommentRepository, PostRepository
-from src.posts.schemas import CommentCreate, CommentUpdate, PostCreate, PostUpdate
+from src.posts.schemas import (
+    CommentCreate,
+    CommentUpdate,
+    CommentWithChildren,
+    PostCreate,
+    PostUpdate,
+)
 
 
 class PostService:
@@ -75,3 +81,21 @@ class CommentService:
             id=comment_id, user_id=user_id
         )
         return result[0] if result else None
+
+    async def get_comments_with_children(self, comment_id: UUID):
+        rows = await self.repository.get_comments_with_children(comment_id=comment_id)
+        if not rows:
+            return None
+
+        nodes: dict[UUID, CommentWithChildren] = {}
+        for comment in rows:
+            nodes[comment.id] = CommentWithChildren.model_validate(comment)
+
+        root = None
+        for node in nodes.values():
+            if node.id == comment_id:
+                root = node
+            elif node.parent_id in nodes:
+                nodes[node.parent_id].children.append(node)
+
+        return root

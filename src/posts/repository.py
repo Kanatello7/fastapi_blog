@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import literal, select
 from sqlalchemy.orm import selectinload
 
 from src.core.utils import CRUDRepository
@@ -40,4 +40,25 @@ class CommentRepository(CRUDRepository):
     async def get_user_comments(self, user_id: UUID) -> list[Comment]:
         query = select(self.model).where(self.model.user_id == user_id)
         result = await self.session.execute(query)
+        return result.scalars().all()
+
+    async def get_comments_with_children(self, comment_id: UUID):
+        # level literal(1).label("level")
+        # Base case
+        anchor = select(Comment.id).where(Comment.id == comment_id)
+        comments_cte = anchor.cte(name="comments_cte", recursive=True)
+
+        recursive = select(Comment.id).join(
+            comments_cte, Comment.parent_id == comments_cte.c.id
+        )
+        comments_cte = comments_cte.union_all(recursive)
+
+        # Join back to get full objects while preserving CTE logic
+        final_query = (
+            select(Comment)
+            .join(comments_cte, Comment.id == comments_cte.c.id)
+            .options(selectinload(Comment.author))
+        )
+
+        result = await self.session.execute(final_query)
         return result.scalars().all()

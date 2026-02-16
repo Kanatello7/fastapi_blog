@@ -56,3 +56,21 @@ class CommentResponse(CommentBase):
 
 class PostComments(PostResponse):
     comments: list[CommentResponse]
+
+
+class CommentWithChildren(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    user_id: UUID
+    post_id: UUID
+    parent_id: UUID | None
+    content: str
+    created_at: datetime
+    updated_at: datetime
+    author: UserResponse
+    children: list["CommentWithChildren"] = []
+
+
+# Required for recursive model
+CommentWithChildren.model_rebuild()
