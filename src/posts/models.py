@@ -44,12 +44,25 @@ class Comment(Base):
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True), primary_key=True, default=uuid4
     )
-    author_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
+    user_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     post_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("posts.id"), nullable=False, index=True
+        PG_UUID(as_uuid=True),
+        ForeignKey("posts.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
+    parent_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("comments.id"),
+        nullable=True,
+        index=True,
+    )
+
     content: Mapped[str] = mapped_column(Text(), nullable=False)
 
     created_at: Mapped[CreatedAt]

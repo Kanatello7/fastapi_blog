@@ -36,6 +36,7 @@ class CommentBase(BaseModel):
 
 class CommentCreate(CommentBase):
     post_id: UUID
+    parent_id: UUID | None = None
 
 
 class CommentUpdate(CommentBase):
@@ -45,8 +46,9 @@ class CommentUpdate(CommentBase):
 class CommentResponse(CommentBase):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
-    author_id: UUID
+    user_id: UUID
     post_id: UUID
+    parent_id: UUID | None
     created_at: datetime
     updated_at: datetime
     author: UserResponse

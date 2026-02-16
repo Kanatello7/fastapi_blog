@@ -21,7 +21,7 @@ async def get_comment(
     comment = await service.get_comment(id=comment_id)
     if not comment:
         raise CommentNotFoundException
-    if comment.author_id != user.id:
+    if comment.user_id != user.id:
         raise CommentAccessDeniedException
     return comment
 

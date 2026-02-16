@@ -38,6 +38,6 @@ class CommentRepository(CRUDRepository):
     model = Comment
 
     async def get_user_comments(self, user_id: UUID) -> list[Comment]:
-        query = select(self.model).where(self.model.author_id == user_id)
+        query = select(self.model).where(self.model.user_id == user_id)
         result = await self.session.execute(query)
         return result.scalars().all()

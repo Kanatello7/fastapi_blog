@@ -57,21 +57,21 @@ class CommentService:
 
     async def create_comment(self, data: CommentCreate, user_id: UUID):
         new_data = data.model_dump()
-        new_data["author_id"] = user_id
+        new_data["user_id"] = user_id
         return await self.repository.create(new_data)
 
     async def update_comment(
         self, comment_id: UUID, user_id: UUID, data: CommentUpdate
     ):
         new_data = data.model_dump()
-        new_data["author_id"] = user_id
+        new_data["user_id"] = user_id
         result = await self.repository.update_one_or_more(
-            new_data, id=comment_id, author_id=user_id
+            new_data, id=comment_id, user_id=user_id
         )
         return result[0] if result else None
 
     async def delete_comment(self, comment_id: UUID, user_id: UUID):
         result = await self.repository.delete_one_or_more(
-            id=comment_id, author_id=user_id
+            id=comment_id, user_id=user_id
         )
         return result[0] if result else None
