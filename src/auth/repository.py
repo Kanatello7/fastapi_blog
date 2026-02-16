@@ -4,8 +4,8 @@ from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.models import RefreshToken
-from src.models import User
 from src.posts.models import Post
+from src.users.models import User
 
 
 class AuthRepository:

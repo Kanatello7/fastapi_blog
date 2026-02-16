@@ -9,8 +9,9 @@ from src.auth.exceptions import (
     TokenExpiredException,
     UserExistsException,
 )
-from src.auth.schemas import RefreshToken, Token, UserCreate, UserResponse
-from src.models import User
+from src.auth.schemas import RefreshToken, Token
+from src.users.models import User
+from src.users.schemas import UserCreate, UserResponse
 
 api_router = APIRouter()
 

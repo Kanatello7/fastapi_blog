@@ -4,10 +4,10 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 
 from src.auth.dependencies import get_current_user
-from src.models import User
 from src.posts.dependencies import CommentServiceDep
 from src.posts.exceptions import CommentAccessDeniedException, CommentNotFoundException
 from src.posts.schemas import CommentCreate, CommentResponse, CommentUpdate
+from src.users.models import User
 
 router = APIRouter()
 

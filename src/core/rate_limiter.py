@@ -5,8 +5,8 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, Request, status
 from redis.asyncio import Redis, RedisError
 
-from src.cache import get_redis
-from src.logging_conf import logger
+from src.core.cache import get_redis
+from src.core.logging_conf import logger
 
 
 class RateLimiter:

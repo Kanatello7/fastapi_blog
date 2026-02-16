@@ -9,7 +9,7 @@ from src.auth.models import RefreshToken
 from src.auth.repository import AuthRepository
 from src.auth.schemas import Token
 from src.auth.utils import hash_password, verify_password
-from src.models import User
+from src.users.models import User
 
 
 class AuthService:

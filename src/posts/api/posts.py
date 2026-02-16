@@ -5,11 +5,11 @@ from fastapi import APIRouter, Depends, Request, status
 from fastapi.templating import Jinja2Templates
 
 from src.auth.dependencies import get_current_user
-from src.cache import cache, invalidate_for, invalidate_namespace
-from src.models import User
+from src.core.cache import cache, invalidate_for
 from src.posts.dependencies import PostServiceDep
 from src.posts.exceptions import PostAccessDeniedException, PostNotFoundException
 from src.posts.schemas import PostComments, PostCreate, PostResponse, PostUpdate
+from src.users.models import User
 
 template_router = APIRouter()
 api_router = APIRouter()

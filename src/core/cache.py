@@ -9,7 +9,7 @@ from fastapi.encoders import jsonable_encoder
 from redis.asyncio import ConnectionPool, Redis, RedisError
 
 from src.conf import settings
-from src.logging_conf import logger
+from src.core.logging_conf import logger
 
 
 class RedisManager:

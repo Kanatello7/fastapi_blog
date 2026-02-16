@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from src.auth.schemas import UserResponse
+from src.users.schemas import UserResponse
 
 
 class PostBase(BaseModel):

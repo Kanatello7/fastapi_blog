@@ -9,7 +9,7 @@ from src.auth.conf import settings
 from src.auth.repository import AuthRepository
 from src.auth.service import AuthService
 from src.db import AsyncSession, get_session
-from src.models import User
+from src.users.models import User
 
 
 def get_repository(
