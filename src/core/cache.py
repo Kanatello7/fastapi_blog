@@ -160,9 +160,9 @@ def _serialize(obj: Any, response_model=None) -> Any:
     return jsonable_encoder(obj)
 
 
-async def invalidate_namespace(namespace: str) -> int:
+async def invalidate_namespace(namespace: str, cache=True) -> int:
     redis: Redis = get_redis()
-    pattern = f"{PREFIX}:{namespace}:*"
+    pattern = f"{PREFIX}:{namespace}:*" if cache else f"{namespace}:*"
     deleted = 0
 
     try:

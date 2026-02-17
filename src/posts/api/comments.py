@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 
 from src.auth.dependencies import get_current_user
+from src.core.cache import cache
 from src.posts.dependencies import CommentServiceDep
 from src.posts.exceptions import CommentAccessDeniedException, CommentNotFoundException
 from src.posts.schemas import (
@@ -32,7 +33,7 @@ async def get_comment(
 
 
 @router.get("/", response_model=list[CommentResponse])
-async def get_comments(
+async def get_user_comments(
     service: CommentServiceDep, user: Annotated[User, Depends(get_current_user)]
 ):
     return await service.get_user_comments(user.id)
@@ -81,6 +82,12 @@ async def delete_comment(
 @router.get(
     "/{comment_id}/childrens",
     status_code=status.HTTP_200_OK,
+    response_model=CommentWithChildren,
+)
+@cache(
+    exp=300,
+    namespace="comments",
+    key_params=["comment_id"],
     response_model=CommentWithChildren,
 )
 async def get_comments_with_childrens(
