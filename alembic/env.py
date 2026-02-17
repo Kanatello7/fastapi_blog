@@ -6,7 +6,7 @@ from alembic import context
 from src.auth.models import RefreshToken
 from src.conf import settings
 from src.db import Base
-from src.posts.models import Comment, Post
+from src.posts.models import Comment, Post, PostTag, Tag
 from src.users.models import User
 
 # this is the Alembic Config object, which provides

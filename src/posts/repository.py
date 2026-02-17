@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import literal, select
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from src.core.utils import CRUDRepository

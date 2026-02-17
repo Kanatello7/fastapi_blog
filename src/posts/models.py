@@ -18,7 +18,7 @@ class Post(Base):
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True), primary_key=True, default=uuid4
     )
-    user_id: Mapped[str] = mapped_column(
+    user_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
@@ -26,16 +26,46 @@ class Post(Base):
     )
     title: Mapped[str] = mapped_column(String(), nullable=False)
     content: Mapped[str] = mapped_column(Text(), nullable=True)
-    date_posted: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-    )
 
     created_at: Mapped[CreatedAt]
     updated_at: Mapped[UpdatedAt]
 
     author: Mapped["User"] = relationship(back_populates="posts")
     comments: Mapped[list["Comment"]] = relationship(back_populates="post")
+    tags: Mapped[list["Tag"]] = relationship(
+        secondary="post_tags", back_populates="posts"
+    )
+
+
+class Tag(Base):
+    __tablename__ = "tags"
+
+    id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), primary_key=True, default=uuid4
+    )
+    name: Mapped[str] = mapped_column(String(), unique=True, nullable=False)
+    slug: Mapped[str] = mapped_column(String(), unique=True, nullable=False, index=True)
+
+    created_at: Mapped[CreatedAt]
+    updated_at: Mapped[UpdatedAt]
+    posts: Mapped[list["Post"]] = relationship(
+        secondary="post_tags", back_populates="tags"
+    )
+
+
+class PostTag(Base):
+    __tablename__ = "post_tags"
+
+    post_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("posts.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    tag_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("tags.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
 
 
 class Comment(Base):

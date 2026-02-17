@@ -24,7 +24,6 @@ class PostResponse(PostBase):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
     user_id: UUID
-    date_posted: datetime
     created_at: datetime
     updated_at: datetime
     author: UserResponse
