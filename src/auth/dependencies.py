@@ -61,3 +61,6 @@ async def require_admin(user: Annotated[User, Depends(get_current_user)]) -> Use
     if not user.is_admin:
         raise HTTPException(status_code=403)
     return user
+
+
+RequireAdminDep = Annotated[User, Depends(require_admin)]

@@ -1,9 +1,8 @@
-from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import UUID as PG_UUID
-from sqlalchemy import DateTime, ForeignKey, String, Text, func
+from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.db import Base, CreatedAt, UpdatedAt

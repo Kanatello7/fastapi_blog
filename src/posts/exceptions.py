@@ -29,3 +29,8 @@ class CommentAccessDeniedException(BaseAPIException):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="you don't have access to this comment",
         )
+
+
+class TagNotFoundException(BaseAPIException):
+    def __init__(self):
+        super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found")

@@ -1,13 +1,17 @@
 from uuid import UUID
 
-from src.posts.models import Comment, Post
-from src.posts.repository import CommentRepository, PostRepository
+from slugify import slugify
+
+from src.posts.models import Comment, Post, Tag
+from src.posts.repository import CommentRepository, PostRepository, TagRepository
 from src.posts.schemas import (
     CommentCreate,
     CommentUpdate,
     CommentWithChildren,
     PostCreate,
     PostUpdate,
+    TagCreate,
+    TagUpdate,
 )
 
 
@@ -99,3 +103,30 @@ class CommentService:
                 nodes[node.parent_id].children.append(node)
 
         return root
+
+
+class TagService:
+    def __init__(self, repo: TagRepository):
+        self.repository = repo
+
+    async def get_tag(self, *args, **kwargs) -> Tag | None:
+        result = await self.repository.get_one_or_many(*args, **kwargs)
+        return result[0] if result else None
+
+    async def get_tags(self) -> list[Tag]:
+        return await self.repository.get_all()
+
+    async def create_tag(self, data: TagCreate):
+        new_data = data.model_dump()
+        new_data["slug"] = slugify(new_data["name"])
+        return await self.repository.create(new_data)
+
+    async def update_tag(self, tag_id: UUID, data: TagUpdate):
+        new_data = data.model_dump()
+        new_data["slug"] = slugify(new_data["name"])
+        result = await self.repository.update_one_or_more(new_data, id=tag_id)
+        return result[0] if result else None
+
+    async def delete_tag(self, tag_id: UUID):
+        result = await self.repository.delete_one_or_more(id=tag_id)
+        return result[0] if result else None

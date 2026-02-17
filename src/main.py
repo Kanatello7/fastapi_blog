@@ -18,6 +18,7 @@ from src.core.rate_limiter import (
 from src.posts.api.comments import router as api_comments_router
 from src.posts.api.posts import api_router as api_posts_router
 from src.posts.api.posts import template_router as template_posts_router
+from src.posts.api.tags import router as api_tags_router
 
 
 @asynccontextmanager
@@ -54,12 +55,15 @@ app.include_router(
     dependencies=[Depends(rate_limiter_posts)],
 )
 
+app.include_router(api_tags_router, prefix="/api/tags", tags=["post tags"])
+
 app.include_router(
     api_comments_router,
     prefix="/api/comments",
     tags=["comments"],
     dependencies=[Depends(rate_limiter_comments)],
 )
+
 app.include_router(
     template_posts_router, prefix="/posts", dependencies=[Depends(rate_limiter_posts)]
 )
@@ -70,6 +74,7 @@ app.include_router(
     tags=["auth"],
     dependencies=[Depends(rate_limiter_auth)],
 )
+
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/media", StaticFiles(directory="media"), name="media")

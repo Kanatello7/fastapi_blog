@@ -5,6 +5,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from src.users.schemas import UserResponse
 
+# POST
+
 
 class PostBase(BaseModel):
     title: str = Field(min_length=1, max_length=100)
@@ -27,6 +29,9 @@ class PostResponse(PostBase):
     created_at: datetime
     updated_at: datetime
     author: UserResponse
+
+
+# COMMENT
 
 
 class CommentBase(BaseModel):
@@ -73,3 +78,25 @@ class CommentWithChildren(BaseModel):
 
 # Required for recursive model
 CommentWithChildren.model_rebuild()
+
+# TAGS
+
+
+class TagBase(BaseModel):
+    name: str
+
+
+class TagCreate(TagBase):
+    pass
+
+
+class TagUpdate(TagBase):
+    pass
+
+
+class TagResponse(TagBase):
+    id: UUID
+    slug: str
+
+    created_at: datetime
+    updated_at: datetime

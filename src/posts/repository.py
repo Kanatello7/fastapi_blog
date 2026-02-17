@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from src.core.utils import CRUDRepository
-from src.posts.models import Comment, Post
+from src.posts.models import Comment, Post, Tag
 
 
 class PostRepository(CRUDRepository):
@@ -62,3 +62,7 @@ class CommentRepository(CRUDRepository):
 
         result = await self.session.execute(final_query)
         return result.scalars().all()
+
+
+class TagRepository(CRUDRepository):
+    model = Tag
