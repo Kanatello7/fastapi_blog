@@ -1,9 +1,8 @@
-from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, status
 
-from src.auth.dependencies import get_current_user
+from src.auth.dependencies import GetCurrentUserDep
 from src.core.cache import cache
 from src.posts.dependencies import CommentServiceDep
 from src.posts.exceptions import CommentAccessDeniedException, CommentNotFoundException
@@ -13,7 +12,6 @@ from src.posts.schemas import (
     CommentUpdate,
     CommentWithChildren,
 )
-from src.users.models import User
 
 router = APIRouter()
 
@@ -22,7 +20,7 @@ router = APIRouter()
 async def get_comment(
     comment_id: UUID,
     service: CommentServiceDep,
-    user: Annotated[User, Depends(get_current_user)],
+    user: GetCurrentUserDep,
 ) -> dict:
     comment = await service.get_comment(id=comment_id)
     if not comment:
@@ -33,9 +31,7 @@ async def get_comment(
 
 
 @router.get("/", response_model=list[CommentResponse])
-async def get_user_comments(
-    service: CommentServiceDep, user: Annotated[User, Depends(get_current_user)]
-):
+async def get_user_comments(service: CommentServiceDep, user: GetCurrentUserDep):
     return await service.get_user_comments(user.id)
 
 
@@ -47,7 +43,7 @@ async def get_user_comments(
 async def create_comment(
     comment: CommentCreate,
     service: CommentServiceDep,
-    user: Annotated[User, Depends(get_current_user)],
+    user: GetCurrentUserDep,
 ):
     return await service.create_comment(comment, user.id)
 
@@ -59,7 +55,7 @@ async def update_comment(
     comment_id: UUID,
     comment: CommentUpdate,
     service: CommentServiceDep,
-    user: Annotated[User, Depends(get_current_user)],
+    user: GetCurrentUserDep,
 ):
     comment = await service.update_comment(comment_id, user.id, comment)
     if not comment:
@@ -71,7 +67,7 @@ async def update_comment(
 async def delete_comment(
     comment_id: UUID,
     service: CommentServiceDep,
-    user: Annotated[User, Depends(get_current_user)],
+    user: GetCurrentUserDep,
 ):
     comment = await service.delete_comment(comment_id, user.id)
     if not comment:
@@ -93,7 +89,7 @@ async def delete_comment(
 async def get_comments_with_childrens(
     comment_id: UUID,
     service: CommentServiceDep,
-    _: Annotated[User, Depends(get_current_user)],
+    _: GetCurrentUserDep,
 ):
     comment = await service.get_comments_with_children(comment_id=comment_id)
     if not comment:

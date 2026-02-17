@@ -64,3 +64,4 @@ async def require_admin(user: Annotated[User, Depends(get_current_user)]) -> Use
 
 
 RequireAdminDep = Annotated[User, Depends(require_admin)]
+GetCurrentUserDep = Annotated[User, Depends(get_current_user)]

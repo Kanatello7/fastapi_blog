@@ -1,15 +1,13 @@
-from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Request, status
 from fastapi.templating import Jinja2Templates
 
-from src.auth.dependencies import get_current_user
+from src.auth.dependencies import GetCurrentUserDep
 from src.core.cache import cache, invalidate_for
 from src.posts.dependencies import PostServiceDep
 from src.posts.exceptions import PostAccessDeniedException, PostNotFoundException
 from src.posts.schemas import PostComments, PostCreate, PostResponse, PostUpdate
-from src.users.models import User
 
 template_router = APIRouter()
 api_router = APIRouter()
@@ -21,7 +19,7 @@ async def post_page(
     request: Request,
     post_id: UUID,
     service: PostServiceDep,
-    user: Annotated[User, Depends(get_current_user)],
+    user: GetCurrentUserDep,
 ):
     post = await service.get_post(id=post_id)
     if not post:
@@ -37,7 +35,7 @@ async def post_page(
 async def home(
     request: Request,
     service: PostServiceDep,
-    user: Annotated[User, Depends(get_current_user)],
+    user: GetCurrentUserDep,
 ) -> str:
     posts = await service.get_user_posts(user.id)
     return templates.TemplateResponse(
@@ -55,7 +53,7 @@ async def home(
 async def get_post(
     post_id: UUID,
     service: PostServiceDep,
-    user: Annotated[User, Depends(get_current_user)],
+    user: GetCurrentUserDep,
 ) -> dict:
     post = await service.get_post(id=post_id)
     if not post:
@@ -67,9 +65,7 @@ async def get_post(
 
 @api_router.get("/", response_model=list[PostResponse])
 @cache(exp=600, namespace="posts", key_params=["user"], response_model=PostResponse)
-async def get_posts(
-    service: PostServiceDep, user: Annotated[User, Depends(get_current_user)]
-):
+async def get_posts(service: PostServiceDep, user: GetCurrentUserDep):
     return await service.get_user_posts(user.id)
 
 
@@ -81,7 +77,7 @@ async def get_posts(
 async def create_post(
     post: PostCreate,
     service: PostServiceDep,
-    user: Annotated[User, Depends(get_current_user)],
+    user: GetCurrentUserDep,
 ):
     post = await service.create_post(post, user.id)
     await invalidate_for(get_posts, user=user)
@@ -95,7 +91,7 @@ async def update_post(
     post_id: UUID,
     post: PostUpdate,
     service: PostServiceDep,
-    user: Annotated[User, Depends(get_current_user)],
+    user: GetCurrentUserDep,
 ):
     post = await service.update_post(post_id, user.id, post)
     if not post:
@@ -114,7 +110,7 @@ async def update_post(
 async def delete_post(
     post_id: UUID,
     service: PostServiceDep,
-    user: Annotated[User, Depends(get_current_user)],
+    user: GetCurrentUserDep,
 ):
     post = await service.delete_post(post_id, user.id)
     if not post:
