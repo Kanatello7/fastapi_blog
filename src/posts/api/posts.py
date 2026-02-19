@@ -160,3 +160,13 @@ async def get_post_tags(post_id: UUID, service: PostServiceDep, _: GetCurrentUse
     if not post:
         raise PostNotFoundException
     return await service.get_post_tags(post_id=post_id)
+
+@api_router.delete("/{post_id}/delete_tag/{tag_id}", status_code=status.HTTP_200_OK)
+async def delete_tag_from_post(post_id: UUID, tag_id: UUID, tag_service: TagServiceDep, post_service: PostServiceDep, user: GetCurrentUserDep):
+    post = await post_service.get_post(id=post_id)
+    if not post:
+        raise PostNotFoundException
+    if post.user_id != user.id:
+        raise PostAccessDeniedException
+    await tag_service.delete_tag_from_post(tag_id=tag_id, post_id=post_id)
+    return {"message": "successfully deleted"}

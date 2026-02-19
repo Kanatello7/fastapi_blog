@@ -1,13 +1,14 @@
 from uuid import UUID
 
 import asyncpg
-from sqlalchemy import insert, select
+from sqlalchemy import delete, insert, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
 from src.core.utils import CRUDRepository
 from src.posts.exceptions import (
     PostNotFoundException,
+    PostTagNotFoundException,
     PostTagUniqueViolationException,
     TagNotFoundException,
 )
@@ -103,4 +104,16 @@ class TagRepository(CRUDRepository):
                     raise TagNotFoundException from e
             raise 
         
+    async def delete_tag_from_post(self, tag_id: UUID, post_id: UUID):
+        stmt = (
+            delete(PostTag)
+            .where(PostTag.tag_id == tag_id, PostTag.post_id == post_id)
+            .returning(PostTag)
+        )
+        result = await self.session.execute(stmt)
+        row = result.scalar_one_or_none()
+        if not row:
+            raise PostTagNotFoundException
+        await self.session.commit()
+        return row
         

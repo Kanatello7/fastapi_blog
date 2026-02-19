@@ -139,4 +139,6 @@ class TagService:
             tag_id=tag_id,
             post_id=post_id
         )
-        
+    
+    async def delete_tag_from_post(self, tag_id: UUID, post_id: UUID):
+        return await self.repository.delete_tag_from_post(tag_id=tag_id, post_id=post_id)
