@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import insert, select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.models import RefreshToken

@@ -10,7 +10,7 @@ from src.db import Base, CreatedAt, UpdatedAt
 
 if TYPE_CHECKING:
     from src.auth.models import RefreshToken
-    from src.posts.models import Comment, Post
+    from src.posts.models import Comment, CommentLike, Post, PostLike
 
 
 class User(Base):
@@ -40,6 +40,8 @@ class User(Base):
         back_populates="user", cascade="all, delete-orphan"
     )
     comments: Mapped[list["Comment"]] = relationship(back_populates="author")
+    posts_likes: Mapped[list["PostLike"]] = relationship(back_populates="user")
+    comments_likes: Mapped[list["CommentLike"]] = relationship(back_populates="user")
 
     @property
     def image_path(self) -> str:
