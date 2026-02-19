@@ -100,3 +100,7 @@ class TagResponse(TagBase):
 
     created_at: datetime
     updated_at: datetime
+
+class PostTagResponse(BaseModel):
+    post_id: UUID
+    tag_id: UUID

@@ -2,6 +2,7 @@ from uuid import UUID
 
 from slugify import slugify
 
+from src.posts.exceptions import PostNotFoundException
 from src.posts.models import Comment, Post, Tag
 from src.posts.repository import CommentRepository, PostRepository, TagRepository
 from src.posts.schemas import (
@@ -50,6 +51,8 @@ class PostService:
         result = await self.repository.get_post_with_comments(post_id=post_id)
         return result
 
+    async def get_post_tags(self, post_id: UUID):
+        return await self.repository.get_post_tags(post_id=post_id)
 
 class CommentService:
     def __init__(self, repo: CommentRepository):
@@ -130,3 +133,10 @@ class TagService:
     async def delete_tag(self, tag_id: UUID):
         result = await self.repository.delete_one_or_more(id=tag_id)
         return result[0] if result else None
+
+    async def add_tag_to_post(self, tag_id: UUID, post_id: UUID):
+        return await self.repository.add_tag_to_post(
+            tag_id=tag_id,
+            post_id=post_id
+        )
+        

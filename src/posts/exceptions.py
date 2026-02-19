@@ -34,3 +34,8 @@ class CommentAccessDeniedException(BaseAPIException):
 class TagNotFoundException(BaseAPIException):
     def __init__(self):
         super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found")
+
+class PostTagUniqueViolationException(BaseAPIException):
+    def __init__(self):
+        super().__init__(status_code=status.HTTP_409_CONFLICT, detail="Tag already assigned to this post")
+        

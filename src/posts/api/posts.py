@@ -5,9 +5,19 @@ from fastapi.templating import Jinja2Templates
 
 from src.auth.dependencies import GetCurrentUserDep
 from src.core.cache import cache, invalidate_for
-from src.posts.dependencies import PostServiceDep
-from src.posts.exceptions import PostAccessDeniedException, PostNotFoundException
-from src.posts.schemas import PostComments, PostCreate, PostResponse, PostUpdate
+from src.posts.dependencies import PostServiceDep, TagServiceDep
+from src.posts.exceptions import (
+    PostAccessDeniedException,
+    PostNotFoundException,
+)
+from src.posts.schemas import (
+    PostComments,
+    PostCreate,
+    PostResponse,
+    PostTagResponse,
+    PostUpdate,
+    TagResponse,
+)
 
 template_router = APIRouter()
 api_router = APIRouter()
@@ -139,3 +149,14 @@ async def post_with_comments(post_id: UUID, service: PostServiceDep):
     if not post:
         raise PostNotFoundException
     return post
+
+@api_router.post("/{post_id}/add_tag/{tag_id}", status_code=status.HTTP_201_CREATED, response_model=PostTagResponse)
+async def add_tag_to_post(post_id: UUID, tag_id: UUID, service: TagServiceDep, _: GetCurrentUserDep):
+    return await service.add_tag_to_post(tag_id=tag_id, post_id=post_id)
+
+@api_router.get("/{post_id}/tags", status_code=status.HTTP_200_OK, response_model=list[TagResponse])
+async def get_post_tags(post_id: UUID, service: PostServiceDep, _: GetCurrentUserDep):
+    post = await service.get_post(id=post_id)
+    if not post:
+        raise PostNotFoundException
+    return await service.get_post_tags(post_id=post_id)
