@@ -122,3 +122,10 @@ class PostLikeResponse(BaseModel):
     post_id: UUID
     user_id: UUID
     created_at: datetime
+
+
+class CommentLikeResponse(BaseModel):
+    id: UUID
+    comment_id: UUID
+    user_id: UUID
+    created_at: datetime

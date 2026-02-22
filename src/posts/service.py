@@ -4,12 +4,16 @@ from slugify import slugify
 
 from src.core.exceptions import ForeignKeyConstraintError, UniqueConstraintError
 from src.posts.exceptions import (
+    CommentLikeNotFoundException,
+    CommentLikeUniqueViolationException,
+    CommentNotFoundException,
     PostLikeNotFoundException,
     PostLikeUniqueViolationException,
     PostNotFoundException,
 )
 from src.posts.models import Comment, Post, Tag
 from src.posts.repository import (
+    CommentLikeRepository,
     CommentRepository,
     PostLikeRepository,
     PostRepository,
@@ -54,7 +58,7 @@ class PostService:
         result = await self.repository.delete_one_or_more(id=post_id, user_id=user_id)
         return result[0] if result else None
 
-    async def get_post_with_comments(self, post_id: UUID):
+    async def get_post_with_comments(self, post_id: UUID) -> Post | None:
         result = await self.repository.get_post_with_comments(post_id=post_id)
         return result
 
@@ -171,4 +175,29 @@ class PostLikeService:
         result = await self.repo.delete_one_or_more(post_id=post_id, user_id=user_id)
         if not result:
             raise PostLikeNotFoundException()
+        return result[0]
+
+
+class CommentLikeService:
+    def __init__(self, repo: CommentLikeRepository):
+        self.repo = repo
+
+    async def like_comment(self, comment_id: UUID, user_id: UUID):
+        data = {"comment_id": comment_id, "user_id": user_id}
+        try:
+            return await self.repo.create(new_data=data)
+        except UniqueConstraintError:
+            raise CommentLikeUniqueViolationException()
+        except ForeignKeyConstraintError as e:
+            if e.constraint_name == "comment_likes_comment_id_fkey":
+                raise CommentNotFoundException()
+            if e.constraint_name == "comment_likes_user_id_fkey":
+                raise UserNotFoundException()
+
+    async def unlike_comment(self, comment_id: UUID, user_id: UUID):
+        result = await self.repo.delete_one_or_more(
+            comment_id=comment_id, user_id=user_id
+        )
+        if not result:
+            raise CommentLikeNotFoundException()
         return result[0]

@@ -64,3 +64,19 @@ class PostLikeNotFoundException(BaseAPIException):
         super().__init__(
             status_code=status.HTTP_404_NOT_FOUND, detail="You haven't liked this post"
         )
+
+
+class CommentLikeUniqueViolationException(BaseAPIException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="You already liked this comment",
+        )
+
+
+class CommentLikeNotFoundException(BaseAPIException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="You haven't liked this comment",
+        )

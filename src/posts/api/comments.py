@@ -4,10 +4,11 @@ from fastapi import APIRouter, status
 
 from src.auth.dependencies import GetCurrentUserDep
 from src.core.cache import cache
-from src.posts.dependencies import CommentServiceDep
+from src.posts.dependencies import CommentLikeServiceDep, CommentServiceDep
 from src.posts.exceptions import CommentAccessDeniedException, CommentNotFoundException
 from src.posts.schemas import (
     CommentCreate,
+    CommentLikeResponse,
     CommentResponse,
     CommentUpdate,
     CommentWithChildren,
@@ -95,3 +96,23 @@ async def get_comments_with_childrens(
     if not comment:
         raise CommentNotFoundException
     return comment
+
+
+@router.post(
+    "/{comment_id}/like",
+    status_code=status.HTTP_201_CREATED,
+    response_model=CommentLikeResponse,
+)
+async def like_comment(
+    comment_id: UUID, service: CommentLikeServiceDep, user: GetCurrentUserDep
+):
+    return await service.like_comment(comment_id=comment_id, user_id=user.id)
+
+
+@router.delete("/{comment_id}/like", status_code=status.HTTP_204_NO_CONTENT)
+async def unlike_comment(
+    comment_id: UUID,
+    service: CommentLikeServiceDep,
+    user: GetCurrentUserDep,
+):
+    await service.unlike_comment(comment_id=comment_id, user_id=user.id)

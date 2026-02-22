@@ -12,7 +12,7 @@ from src.posts.exceptions import (
     PostTagUniqueViolationException,
     TagNotFoundException,
 )
-from src.posts.models import Comment, Post, PostLike, PostTag, Tag
+from src.posts.models import Comment, CommentLike, Post, PostLike, PostTag, Tag
 
 
 class PostRepository(CRUDRepository):
@@ -190,3 +190,7 @@ class TagRepository(CRUDRepository):
 
 class PostLikeRepository(CRUDRepository):
     model = PostLike
+
+
+class CommentLikeRepository(CRUDRepository):
+    model = CommentLike
