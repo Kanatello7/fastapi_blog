@@ -3,7 +3,11 @@ from uuid import UUID
 from slugify import slugify
 
 from src.core.exceptions import ForeignKeyConstraintError, UniqueConstraintError
-from src.posts.exceptions import PostLikeUniqueViolationException, PostNotFoundException
+from src.posts.exceptions import (
+    PostLikeNotFoundException,
+    PostLikeUniqueViolationException,
+    PostNotFoundException,
+)
 from src.posts.models import Comment, Post, Tag
 from src.posts.repository import (
     CommentRepository,
@@ -27,15 +31,11 @@ class PostService:
     def __init__(self, repo: PostRepository):
         self.repository = repo
 
-    async def get_post(self, *args, **kwargs) -> Post | None:
-        result = await self.repository.get_one_or_many(*args, **kwargs)
-        return result[0] if result else None
+    async def get_post(self, post_id: UUID, user_id: UUID):
+        return await self.repository.get_post(post_id=post_id, user_id=user_id)
 
-    async def get_posts(self) -> list[Post]:
-        return await self.repository.get_all()
-
-    async def get_user_posts(self, user_id: UUID):
-        return await self.repository.get_user_posts(user_id)
+    async def get_posts(self, user_id: UUID):
+        return await self.repository.get_posts(user_id=user_id)
 
     async def create_post(self, data: PostCreate, user_id: UUID):
         new_data = data.model_dump()
@@ -168,4 +168,7 @@ class PostLikeService:
                 raise UserNotFoundException()
 
     async def unlike_post(self, post_id: UUID, user_id: UUID):
-        return await self.repo.delete_one_or_more(post_id=post_id, user_id=user_id)
+        result = await self.repo.delete_one_or_more(post_id=post_id, user_id=user_id)
+        if not result:
+            raise PostLikeNotFoundException()
+        return result[0]

@@ -8,7 +8,6 @@ from src.core.cache import cache, invalidate_for
 from src.posts.dependencies import PostLikeServiceDep, PostServiceDep, TagServiceDep
 from src.posts.exceptions import (
     PostAccessDeniedException,
-    PostLikeNotFoundException,
     PostNotFoundException,
 )
 from src.posts.schemas import (
@@ -66,19 +65,17 @@ async def get_post(
     post_id: UUID,
     service: PostServiceDep,
     user: GetCurrentUserDep,
-) -> dict:
-    post = await service.get_post(id=post_id)
+):
+    post = await service.get_post(post_id=post_id, user_id=user.id)
     if not post:
         raise PostNotFoundException
-    if post.user_id != user.id:
-        raise PostAccessDeniedException
     return post
 
 
 @api_router.get("/", response_model=list[PostResponse])
 @cache(exp=600, namespace="posts", key_params=["user"], response_model=PostResponse)
 async def get_posts(service: PostServiceDep, user: GetCurrentUserDep):
-    return await service.get_user_posts(user.id)
+    return await service.get_posts(user.id)
 
 
 @api_router.post(
@@ -206,6 +203,4 @@ async def like_post(
 async def unlike_post(
     post_id: UUID, service: PostLikeServiceDep, user: GetCurrentUserDep
 ):
-    post_like = await service.unlike_post(post_id=post_id, user_id=user.id)
-    if not post_like:
-        raise PostLikeNotFoundException
+    await service.unlike_post(post_id=post_id, user_id=user.id)

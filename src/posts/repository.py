@@ -1,7 +1,7 @@
 from uuid import UUID
 
 import asyncpg
-from sqlalchemy import delete, insert, select
+from sqlalchemy import delete, exists, func, insert, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
@@ -18,14 +18,84 @@ from src.posts.models import Comment, Post, PostLike, PostTag, Tag
 class PostRepository(CRUDRepository):
     model = Post
 
-    async def get_user_posts(self, user_id: UUID) -> list[Post]:
+    async def get_post(self, post_id: UUID, user_id: UUID):
+        post_likes = (
+            select(func.count(PostLike.id))
+            .where(PostLike.post_id == post_id)
+            .scalar_subquery()
+        )
+        is_liked = exists().where(
+            PostLike.post_id == post_id, PostLike.user_id == user_id
+        )
+        comments_count = (
+            select(func.count(Comment.id))
+            .where(Comment.post_id == post_id)
+            .scalar_subquery()
+        )
         query = (
-            select(self.model)
-            .where(self.model.user_id == user_id)
+            select(
+                Post,
+                post_likes.label("likes_count"),
+                is_liked.label("is_liked"),
+                comments_count.label("comments_count"),
+            )
+            .where(Post.id == post_id)
             .options(selectinload(Post.author))
         )
         result = await self.session.execute(query)
-        return result.scalars().all()
+        row = result.one_or_none()
+
+        if not row:
+            return None
+
+        post, likes_count, is_liked, comments_count = row
+
+        post.likes_count = likes_count
+        post.is_liked = is_liked
+        post.comments_count = comments_count
+
+        return post
+
+    async def get_posts(self, user_id: UUID) -> list[Post]:
+        # Correlated subqueries
+        post_likes_count = (
+            select(func.count())
+            .where(PostLike.post_id == Post.id)
+            .correlate(Post)
+            .scalar_subquery()
+        )
+
+        is_liked = (
+            exists()
+            .where(PostLike.post_id == Post.id)
+            .where(PostLike.user_id == user_id)
+            .correlate(Post)
+        )
+
+        comments_count = (
+            select(func.count())
+            .where(Comment.post_id == Post.id)
+            .correlate(Post)
+            .scalar_subquery()
+        )
+
+        # Main query
+        stmt = select(
+            Post,
+            post_likes_count.label("likes_count"),
+            is_liked.label("is_liked"),
+            comments_count.label("comments_count"),
+        ).options(selectinload(Post.author))
+        results = await self.session.execute(stmt)
+        posts = []
+        for row in results.all():
+            post = row.Post
+            post.likes_count = row.likes_count
+            post.is_liked = row.is_liked
+            post.comments_count = row.comments_count
+            posts.append(post)
+
+        return posts
 
     async def get_post_with_comments(self, post_id: UUID):
         query = (

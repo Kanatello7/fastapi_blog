@@ -29,6 +29,9 @@ class PostResponse(PostBase):
     created_at: datetime
     updated_at: datetime
     author: UserResponse
+    likes_count: int
+    is_liked: bool
+    comments_count: int
 
 
 # COMMENT
@@ -58,7 +61,13 @@ class CommentResponse(CommentBase):
     author: UserResponse
 
 
-class PostComments(PostResponse):
+class PostComments(PostBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    user_id: UUID
+    created_at: datetime
+    updated_at: datetime
+    author: UserResponse
     comments: list[CommentResponse]
 
 
@@ -95,6 +104,7 @@ class TagUpdate(TagBase):
 
 
 class TagResponse(TagBase):
+    model_config = ConfigDict(from_attributes=True)
     id: UUID
     slug: str
 
