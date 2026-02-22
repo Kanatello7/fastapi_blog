@@ -3,7 +3,7 @@ from uuid import UUID
 import asyncpg
 from sqlalchemy import delete, exists, func, insert, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import aliased, selectinload
 
 from src.core.utils import CRUDRepository
 from src.posts.exceptions import (
@@ -124,10 +124,81 @@ class PostRepository(CRUDRepository):
 class CommentRepository(CRUDRepository):
     model = Comment
 
-    async def get_user_comments(self, user_id: UUID) -> list[Comment]:
-        query = select(self.model).where(self.model.user_id == user_id)
+    async def get_comment(self, comment_id: UUID, user_id: UUID):
+        likes_count = (
+            select(func.count())
+            .where(CommentLike.comment_id == comment_id)
+            .scalar_subquery()
+        )
+        is_liked = exists().where(
+            CommentLike.comment_id == comment_id, CommentLike.user_id == user_id
+        )
+        replies_count = (
+            select(func.count())
+            .where(Comment.parent_id == comment_id)
+            .scalar_subquery()
+        )
+        query = (
+            select(
+                Comment,
+                likes_count.label("likes_count"),
+                is_liked.label("is_liked"),
+                replies_count.label("replies_count"),
+            )
+            .where(Comment.id == comment_id)
+            .options(selectinload(Comment.author))
+        )
         result = await self.session.execute(query)
-        return result.scalars().all()
+        row = result.one_or_none()
+
+        if not row:
+            return None
+
+        comment, likes_count, is_liked, replies_count = row
+
+        comment.likes_count = likes_count
+        comment.is_liked = is_liked
+        comment.replies_count = replies_count
+
+        return comment
+
+    async def get_comments(self, user_id: UUID) -> list[Comment]:
+        likes_count = (
+            select(func.count())
+            .where(CommentLike.comment_id == Comment.id)
+            .correlate(Comment)
+            .scalar_subquery()
+        )
+        is_liked = (
+            exists()
+            .where(CommentLike.comment_id == Comment.id, CommentLike.user_id == user_id)
+            .correlate(Comment)
+        )
+
+        ChildComment = aliased(Comment)
+        replies_count = (
+            select(func.count())
+            .select_from(ChildComment)
+            .where(ChildComment.parent_id == Comment.id)
+            .correlate(Comment)
+            .scalar_subquery()
+        )
+        query = select(
+            Comment,
+            likes_count.label("likes_count"),
+            is_liked.label("is_liked"),
+            replies_count.label("replies_count"),
+        ).options(selectinload(Comment.author))
+
+        results = await self.session.execute(query)
+        comments = []
+        for row in results.all():
+            comment = row.Comment
+            comment.likes_count = row.likes_count
+            comment.is_liked = row.is_liked
+            comment.replies_count = row.replies_count
+            comments.append(comment)
+        return comments
 
     async def get_comments_with_children(self, comment_id: UUID):
         # level literal(1).label("level")

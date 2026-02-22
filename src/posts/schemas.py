@@ -59,6 +59,9 @@ class CommentResponse(CommentBase):
     created_at: datetime
     updated_at: datetime
     author: UserResponse
+    likes_count: int
+    is_liked: bool
+    replies_count: int
 
 
 class PostComments(PostBase):

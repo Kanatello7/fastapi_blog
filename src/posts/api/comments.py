@@ -23,17 +23,15 @@ async def get_comment(
     service: CommentServiceDep,
     user: GetCurrentUserDep,
 ) -> dict:
-    comment = await service.get_comment(id=comment_id)
+    comment = await service.get_comment(comment_id=comment_id, user_id=user.id)
     if not comment:
         raise CommentNotFoundException
-    if comment.user_id != user.id:
-        raise CommentAccessDeniedException
     return comment
 
 
 @router.get("/", response_model=list[CommentResponse])
 async def get_user_comments(service: CommentServiceDep, user: GetCurrentUserDep):
-    return await service.get_user_comments(user.id)
+    return await service.get_comments(user.id)
 
 
 @router.post(
