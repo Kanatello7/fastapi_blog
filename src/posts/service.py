@@ -173,6 +173,9 @@ class PostLikeService:
             raise PostLikeNotFoundException()
         return result[0]
 
+    async def get_who_liked(self, post_id: UUID):
+        return await self.repo.get_who_liked(post_id=post_id)
+
 
 class CommentLikeService:
     def __init__(self, repo: CommentLikeRepository):

@@ -13,6 +13,7 @@ from src.posts.exceptions import (
     TagNotFoundException,
 )
 from src.posts.models import Comment, CommentLike, Post, PostLike, PostTag, Tag
+from src.users.models import User
 
 
 class PostRepository(CRUDRepository):
@@ -261,6 +262,15 @@ class TagRepository(CRUDRepository):
 
 class PostLikeRepository(CRUDRepository):
     model = PostLike
+
+    async def get_who_liked(self, post_id: UUID):
+        query = (
+            select(User.username, User.email, User.id)
+            .join(PostLike, PostLike.user_id == User.id)
+            .where(PostLike.post_id == post_id)
+        )
+        results = await self.session.execute(query)
+        return results.mappings().all()
 
 
 class CommentLikeRepository(CRUDRepository):

@@ -18,6 +18,7 @@ from src.posts.schemas import (
     PostTagResponse,
     PostUpdate,
     TagResponse,
+    UserLikedResponse,
 )
 
 template_router = APIRouter()
@@ -204,3 +205,20 @@ async def unlike_post(
     post_id: UUID, service: PostLikeServiceDep, user: GetCurrentUserDep
 ):
     await service.unlike_post(post_id=post_id, user_id=user.id)
+
+
+@api_router.get(
+    "/{post_id}/likes",
+    status_code=status.HTTP_200_OK,
+    response_model=list[UserLikedResponse],
+)
+@cache(
+    exp=300,
+    namespace="post_liked_users",
+    key_params=["post_id"],
+    response_model=UserLikedResponse,
+)
+async def get_who_liked(
+    post_id: UUID, service: PostLikeServiceDep, _: GetCurrentUserDep
+):
+    return await service.get_who_liked(post_id=post_id)

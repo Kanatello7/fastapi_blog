@@ -121,6 +121,7 @@ class PostTagResponse(BaseModel):
 
 
 class PostLikeResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: UUID
     post_id: UUID
     user_id: UUID
@@ -128,7 +129,16 @@ class PostLikeResponse(BaseModel):
 
 
 class CommentLikeResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: UUID
     comment_id: UUID
     user_id: UUID
     created_at: datetime
+
+
+class UserLikedResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    username: str
+    email: str
+    id: UUID

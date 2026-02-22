@@ -5,7 +5,7 @@ from fastapi import APIRouter, status
 from src.auth.dependencies import GetCurrentUserDep
 from src.core.cache import cache
 from src.posts.dependencies import CommentLikeServiceDep, CommentServiceDep
-from src.posts.exceptions import CommentAccessDeniedException, CommentNotFoundException
+from src.posts.exceptions import CommentNotFoundException
 from src.posts.schemas import (
     CommentCreate,
     CommentLikeResponse,
