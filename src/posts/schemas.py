@@ -101,6 +101,14 @@ class TagResponse(TagBase):
     created_at: datetime
     updated_at: datetime
 
+
 class PostTagResponse(BaseModel):
     post_id: UUID
     tag_id: UUID
+
+
+class PostLikeResponse(BaseModel):
+    id: UUID
+    post_id: UUID
+    user_id: UUID
+    created_at: datetime

@@ -35,10 +35,32 @@ class TagNotFoundException(BaseAPIException):
     def __init__(self):
         super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found")
 
+
 class PostTagUniqueViolationException(BaseAPIException):
     def __init__(self):
-        super().__init__(status_code=status.HTTP_409_CONFLICT, detail="Tag already assigned to this post")
-        
+        super().__init__(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Tag already assigned to this post",
+        )
+
+
 class PostTagNotFoundException(BaseAPIException):
     def __init__(self):
-        super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail="Tag is not assigned to this post")
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tag is not assigned to this post",
+        )
+
+
+class PostLikeUniqueViolationException(BaseAPIException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_409_CONFLICT, detail="You already liked this post"
+        )
+
+
+class PostLikeNotFoundException(BaseAPIException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND, detail="You haven't liked this post"
+        )

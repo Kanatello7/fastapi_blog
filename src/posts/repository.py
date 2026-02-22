@@ -12,7 +12,7 @@ from src.posts.exceptions import (
     PostTagUniqueViolationException,
     TagNotFoundException,
 )
-from src.posts.models import Comment, Post, PostTag, Tag
+from src.posts.models import Comment, Post, PostLike, PostTag, Tag
 
 
 class PostRepository(CRUDRepository):
@@ -96,14 +96,14 @@ class TagRepository(CRUDRepository):
             if isinstance(orig, asyncpg.exceptions.UniqueViolationError):
                 raise PostTagUniqueViolationException from e
             if isinstance(orig, asyncpg.exceptions.ForeignKeyViolationError):
-                constraint = orig.constraint_name 
+                constraint = orig.constraint_name
 
                 if constraint == "post_tags_post_id_fkey":
-                    raise PostNotFoundException from e 
+                    raise PostNotFoundException from e
                 if constraint == "post_tags_tag_id_fkey":
                     raise TagNotFoundException from e
-            raise 
-        
+            raise
+
     async def delete_tag_from_post(self, tag_id: UUID, post_id: UUID):
         stmt = (
             delete(PostTag)
@@ -116,4 +116,7 @@ class TagRepository(CRUDRepository):
             raise PostTagNotFoundException
         await self.session.commit()
         return row
-        
+
+
+class PostLikeRepository(CRUDRepository):
+    model = PostLike

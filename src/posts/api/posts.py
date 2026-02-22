@@ -5,14 +5,16 @@ from fastapi.templating import Jinja2Templates
 
 from src.auth.dependencies import GetCurrentUserDep
 from src.core.cache import cache, invalidate_for
-from src.posts.dependencies import PostServiceDep, TagServiceDep
+from src.posts.dependencies import PostLikeServiceDep, PostServiceDep, TagServiceDep
 from src.posts.exceptions import (
     PostAccessDeniedException,
+    PostLikeNotFoundException,
     PostNotFoundException,
 )
 from src.posts.schemas import (
     PostComments,
     PostCreate,
+    PostLikeResponse,
     PostResponse,
     PostTagResponse,
     PostUpdate,
@@ -150,19 +152,36 @@ async def post_with_comments(post_id: UUID, service: PostServiceDep):
         raise PostNotFoundException
     return post
 
-@api_router.post("/{post_id}/add_tag/{tag_id}", status_code=status.HTTP_201_CREATED, response_model=PostTagResponse)
-async def add_tag_to_post(post_id: UUID, tag_id: UUID, service: TagServiceDep, _: GetCurrentUserDep):
+
+@api_router.post(
+    "/{post_id}/add_tag/{tag_id}",
+    status_code=status.HTTP_201_CREATED,
+    response_model=PostTagResponse,
+)
+async def add_tag_to_post(
+    post_id: UUID, tag_id: UUID, service: TagServiceDep, _: GetCurrentUserDep
+):
     return await service.add_tag_to_post(tag_id=tag_id, post_id=post_id)
 
-@api_router.get("/{post_id}/tags", status_code=status.HTTP_200_OK, response_model=list[TagResponse])
+
+@api_router.get(
+    "/{post_id}/tags", status_code=status.HTTP_200_OK, response_model=list[TagResponse]
+)
 async def get_post_tags(post_id: UUID, service: PostServiceDep, _: GetCurrentUserDep):
     post = await service.get_post(id=post_id)
     if not post:
         raise PostNotFoundException
     return await service.get_post_tags(post_id=post_id)
 
+
 @api_router.delete("/{post_id}/delete_tag/{tag_id}", status_code=status.HTTP_200_OK)
-async def delete_tag_from_post(post_id: UUID, tag_id: UUID, tag_service: TagServiceDep, post_service: PostServiceDep, user: GetCurrentUserDep):
+async def delete_tag_from_post(
+    post_id: UUID,
+    tag_id: UUID,
+    tag_service: TagServiceDep,
+    post_service: PostServiceDep,
+    user: GetCurrentUserDep,
+):
     post = await post_service.get_post(id=post_id)
     if not post:
         raise PostNotFoundException
@@ -170,3 +189,23 @@ async def delete_tag_from_post(post_id: UUID, tag_id: UUID, tag_service: TagServ
         raise PostAccessDeniedException
     await tag_service.delete_tag_from_post(tag_id=tag_id, post_id=post_id)
     return {"message": "successfully deleted"}
+
+
+@api_router.post(
+    "/{post_id}/like",
+    response_model=PostLikeResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def like_post(
+    post_id: UUID, service: PostLikeServiceDep, user: GetCurrentUserDep
+):
+    return await service.like_post(post_id=post_id, user_id=user.id)
+
+
+@api_router.delete("/{post_id}/like", status_code=status.HTTP_204_NO_CONTENT)
+async def unlike_post(
+    post_id: UUID, service: PostLikeServiceDep, user: GetCurrentUserDep
+):
+    post_like = await service.unlike_post(post_id=post_id, user_id=user.id)
+    if not post_like:
+        raise PostLikeNotFoundException

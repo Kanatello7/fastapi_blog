@@ -2,9 +2,15 @@ from uuid import UUID
 
 from slugify import slugify
 
-from src.posts.exceptions import PostNotFoundException
+from src.core.exceptions import ForeignKeyConstraintError, UniqueConstraintError
+from src.posts.exceptions import PostLikeUniqueViolationException, PostNotFoundException
 from src.posts.models import Comment, Post, Tag
-from src.posts.repository import CommentRepository, PostRepository, TagRepository
+from src.posts.repository import (
+    CommentRepository,
+    PostLikeRepository,
+    PostRepository,
+    TagRepository,
+)
 from src.posts.schemas import (
     CommentCreate,
     CommentUpdate,
@@ -14,6 +20,7 @@ from src.posts.schemas import (
     TagCreate,
     TagUpdate,
 )
+from src.users.exceptions import UserNotFoundException
 
 
 class PostService:
@@ -53,6 +60,7 @@ class PostService:
 
     async def get_post_tags(self, post_id: UUID):
         return await self.repository.get_post_tags(post_id=post_id)
+
 
 class CommentService:
     def __init__(self, repo: CommentRepository):
@@ -135,10 +143,29 @@ class TagService:
         return result[0] if result else None
 
     async def add_tag_to_post(self, tag_id: UUID, post_id: UUID):
-        return await self.repository.add_tag_to_post(
-            tag_id=tag_id,
-            post_id=post_id
-        )
-    
+        return await self.repository.add_tag_to_post(tag_id=tag_id, post_id=post_id)
+
     async def delete_tag_from_post(self, tag_id: UUID, post_id: UUID):
-        return await self.repository.delete_tag_from_post(tag_id=tag_id, post_id=post_id)
+        return await self.repository.delete_tag_from_post(
+            tag_id=tag_id, post_id=post_id
+        )
+
+
+class PostLikeService:
+    def __init__(self, repo: PostLikeRepository):
+        self.repo = repo
+
+    async def like_post(self, post_id: UUID, user_id: UUID):
+        data = {"post_id": post_id, "user_id": user_id}
+        try:
+            return await self.repo.create(new_data=data)
+        except UniqueConstraintError:
+            raise PostLikeUniqueViolationException()
+        except ForeignKeyConstraintError as e:
+            if e.constraint_name == "post_likes_post_id_fkey":
+                raise PostNotFoundException()
+            if e.constraint_name == "post_likes_user_id_fkey":
+                raise UserNotFoundException()
+
+    async def unlike_post(self, post_id: UUID, user_id: UUID):
+        return await self.repo.delete_one_or_more(post_id=post_id, user_id=user_id)

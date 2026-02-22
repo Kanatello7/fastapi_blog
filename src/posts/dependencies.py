@@ -3,8 +3,13 @@ from typing import Annotated
 from fastapi import Depends
 
 from src.db import AsyncSession, get_session
-from src.posts.repository import CommentRepository, PostRepository, TagRepository
-from src.posts.service import CommentService, PostService, TagService
+from src.posts.repository import (
+    CommentRepository,
+    PostLikeRepository,
+    PostRepository,
+    TagRepository,
+)
+from src.posts.service import CommentService, PostLikeService, PostService, TagService
 
 
 def get_post_repository(
@@ -43,6 +48,19 @@ def get_tag_service(
     return TagService(repo=repository)
 
 
+def get_post_like_repository(
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> PostLikeRepository:
+    return PostLikeRepository(session=session)
+
+
+def get_post_like_service(
+    repository: Annotated[PostLikeRepository, Depends(get_post_like_repository)],
+) -> PostLikeService:
+    return PostLikeService(repo=repository)
+
+
 PostServiceDep = Annotated[PostService, Depends(get_post_service)]
 CommentServiceDep = Annotated[CommentService, Depends(get_comment_service)]
 TagServiceDep = Annotated[TagService, Depends(get_tag_service)]
+PostLikeServiceDep = Annotated[PostLikeService, Depends(get_post_like_service)]
