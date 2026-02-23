@@ -40,3 +40,15 @@ class FollowResponse(BaseModel):
 class UserStatsResponse(BaseModel):
     followers_count: int
     following_count: int
+    is_followed: bool
+
+
+class IsFollowingResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    is_following: bool
+
+
+class FollowerResponse(UserBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    is_followed_by_me: bool
