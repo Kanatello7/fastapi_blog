@@ -14,11 +14,13 @@ from src.core.rate_limiter import (
     rate_limiter_auth,
     rate_limiter_comments,
     rate_limiter_posts,
+    rate_limiter_users,
 )
 from src.posts.api.comments import router as api_comments_router
 from src.posts.api.posts import api_router as api_posts_router
 from src.posts.api.posts import template_router as template_posts_router
 from src.posts.api.tags import router as api_tags_router
+from src.users.router import router as user_router
 
 
 @asynccontextmanager
@@ -73,6 +75,13 @@ app.include_router(
     prefix="/api/auth",
     tags=["auth"],
     dependencies=[Depends(rate_limiter_auth)],
+)
+
+app.include_router(
+    user_router,
+    prefix="/api/users",
+    tags=["users"],
+    dependencies=[Depends(rate_limiter_users)],
 )
 
 

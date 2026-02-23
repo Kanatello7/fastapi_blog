@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
@@ -25,3 +26,17 @@ class UserResponse(UserBase):
     id: UUID
     image_file: str | None
     image_path: str
+
+
+class FollowResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    follower_id: UUID
+    following_id: UUID
+    created_at: datetime
+
+
+class UserStatsResponse(BaseModel):
+    followers_count: int
+    following_count: int
