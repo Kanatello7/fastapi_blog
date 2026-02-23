@@ -7,7 +7,7 @@ from src.auth.models import RefreshToken
 from src.conf import settings
 from src.db import Base
 from src.posts.models import Comment, CommentLike, Post, PostLike, PostTag, Tag
-from src.users.models import User
+from src.users.models import Follower, User
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

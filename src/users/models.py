@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import UUID as PG_UUID
-from sqlalchemy import Boolean, DateTime, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.db import Base, CreatedAt, UpdatedAt
@@ -48,3 +48,18 @@ class User(Base):
         if self.image_file:
             return f"/media/profile_pics/{self.image_file}"
         return "/static/profile_pics/default.jpg"
+
+
+class Follower(Base):
+    __tablename__ = "followers"
+
+    id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), primary_key=True, default=uuid4
+    )
+    follower_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    following_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    created_at: Mapped[CreatedAt]
+
+    __table_args__ = (
+        UniqueConstraint("follower_id", "following_id", name="uq_follower_following"),
+    )
