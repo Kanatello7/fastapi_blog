@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import UUID as PG_UUID
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.db import Base, CreatedAt, UpdatedAt
@@ -56,10 +56,16 @@ class Follower(Base):
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True), primary_key=True, default=uuid4
     )
-    follower_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
-    following_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    follower_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    following_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     created_at: Mapped[CreatedAt]
 
     __table_args__ = (
         UniqueConstraint("follower_id", "following_id", name="uq_follower_following"),
+        Index("ix_followers_following_id", "following_id"),
+        Index("ix_followers_follower_id", "follower_id"),
     )
