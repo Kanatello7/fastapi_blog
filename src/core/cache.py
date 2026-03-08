@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import random
 import zlib
 from functools import wraps
@@ -9,7 +10,8 @@ from fastapi.encoders import jsonable_encoder
 from redis.asyncio import ConnectionPool, Redis, RedisError
 
 from src.conf import settings
-from src.core.logging_conf import logger
+
+logger = logging.getLogger("app.cache")
 
 
 class RedisManager:

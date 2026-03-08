@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
@@ -9,7 +10,7 @@ from fastapi.templating import Jinja2Templates
 from src.auth.router import api_router as auth_router
 from src.conf import settings
 from src.core.cache import RedisError, redis_manager
-from src.core.logging_conf import logger
+from src.core.logging_conf import setup_logging
 from src.core.rate_limiter import (
     rate_limiter_auth,
     rate_limiter_comments,
@@ -22,6 +23,10 @@ from src.posts.api.posts import api_router as api_posts_router
 from src.posts.api.posts import template_router as template_posts_router
 from src.posts.api.tags import router as api_tags_router
 from src.users.router import router as user_router
+
+setup_logging(log_level=settings.LOG_LEVEL)
+
+logger = logging.getLogger("app.main")
 
 
 @asynccontextmanager

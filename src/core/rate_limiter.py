@@ -1,3 +1,4 @@
+import logging
 import random
 from time import time
 from typing import Annotated
@@ -6,7 +7,8 @@ from fastapi import Depends, HTTPException, Request, status
 from redis.asyncio import Redis, RedisError
 
 from src.core.cache import get_redis
-from src.core.logging_conf import logger
+
+logger = logging.getLogger("app.rate_limiter")
 
 
 class RateLimiter:
