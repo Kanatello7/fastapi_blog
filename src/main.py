@@ -16,6 +16,7 @@ from src.core.rate_limiter import (
     rate_limiter_posts,
     rate_limiter_users,
 )
+from src.middleware import add_middlewares_to_app
 from src.posts.api.comments import router as api_comments_router
 from src.posts.api.posts import api_router as api_posts_router
 from src.posts.api.posts import template_router as template_posts_router
@@ -38,6 +39,8 @@ app = FastAPI(
     openapi_url=None if settings.PRODUCTION else "/openapi.json",
     lifespan=lifespan,
 )
+
+add_middlewares_to_app(app=app)
 
 
 @app.get("/health/redis", tags=["health"])
