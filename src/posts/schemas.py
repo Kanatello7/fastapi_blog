@@ -28,6 +28,10 @@ class PostResponse(PostBase):
     user_id: UUID
     created_at: datetime
     updated_at: datetime
+
+
+class PostResponseDetailed(PostResponse):
+    model_config = ConfigDict(from_attributes=True)
     author: UserResponse
     likes_count: int
     is_liked: bool
@@ -58,10 +62,18 @@ class CommentResponse(CommentBase):
     parent_id: UUID | None
     created_at: datetime
     updated_at: datetime
+
+
+class CommentResponseDetailed(CommentResponse):
+    model_config = ConfigDict(from_attributes=True)
     author: UserResponse
     likes_count: int
     is_liked: bool
     replies_count: int
+
+
+class CommentWithAuthor(CommentResponse):
+    author: UserResponse
 
 
 class PostComments(PostBase):
@@ -71,7 +83,7 @@ class PostComments(PostBase):
     created_at: datetime
     updated_at: datetime
     author: UserResponse
-    comments: list[CommentResponse]
+    comments: list[CommentWithAuthor]
 
 
 class CommentWithChildren(BaseModel):

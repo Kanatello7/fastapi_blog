@@ -15,6 +15,7 @@ from src.posts.schemas import (
     PostCreate,
     PostLikeResponse,
     PostResponse,
+    PostResponseDetailed,
     PostTagResponse,
     PostUpdate,
     TagResponse,
@@ -55,12 +56,12 @@ async def home(
     )
 
 
-@api_router.get("/{post_id}", response_model=PostResponse)
+@api_router.get("/{post_id}", response_model=PostResponseDetailed)
 @cache(
     exp=300,
     namespace="post",
     key_params=["post_id", "user"],
-    response_model=PostResponse,
+    response_model=PostResponseDetailed,
 )
 async def get_post(
     post_id: UUID,
@@ -73,8 +74,10 @@ async def get_post(
     return post
 
 
-@api_router.get("/", response_model=list[PostResponse])
-@cache(exp=600, namespace="posts", key_params=["user"], response_model=PostResponse)
+@api_router.get("/", response_model=list[PostResponseDetailed])
+@cache(
+    exp=600, namespace="posts", key_params=["user"], response_model=PostResponseDetailed
+)
 async def get_posts(service: PostServiceDep, user: GetCurrentUserDep):
     return await service.get_posts(user.id)
 

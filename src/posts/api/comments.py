@@ -10,6 +10,7 @@ from src.posts.schemas import (
     CommentCreate,
     CommentLikeResponse,
     CommentResponse,
+    CommentResponseDetailed,
     CommentUpdate,
     CommentWithChildren,
 )
@@ -17,7 +18,7 @@ from src.posts.schemas import (
 router = APIRouter()
 
 
-@router.get("/{comment_id}", response_model=CommentResponse)
+@router.get("/{comment_id}", response_model=CommentResponseDetailed)
 async def get_comment(
     comment_id: UUID,
     service: CommentServiceDep,
@@ -29,7 +30,7 @@ async def get_comment(
     return comment
 
 
-@router.get("/", response_model=list[CommentResponse])
+@router.get("/", response_model=list[CommentResponseDetailed])
 async def get_user_comments(service: CommentServiceDep, user: GetCurrentUserDep):
     return await service.get_comments(user.id)
 

@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import UUID
 
 import asyncpg
@@ -13,13 +14,31 @@ from src.posts.exceptions import (
     TagNotFoundException,
 )
 from src.posts.models import Comment, CommentLike, Post, PostLike, PostTag, Tag
+from src.posts.schemas import (
+    CommentCreate,
+    CommentLikeResponse,
+    CommentResponse,
+    CommentResponseDetailed,
+    CommentUpdate,
+    PostComments,
+    PostCreate,
+    PostLikeResponse,
+    PostResponse,
+    PostResponseDetailed,
+    PostUpdate,
+    TagCreate,
+    TagResponse,
+    TagUpdate,
+)
 from src.users.models import User
 
 
-class PostRepository(CRUDRepository):
+class PostRepository(CRUDRepository[PostCreate, PostUpdate, PostResponse]):
     model = Post
 
-    async def get_post(self, post_id: UUID, user_id: UUID):
+    async def get_post(
+        self, post_id: UUID, user_id: UUID
+    ) -> Optional[PostResponseDetailed]:
         post_likes = (
             select(func.count(PostLike.id))
             .where(PostLike.post_id == post_id)
@@ -55,9 +74,9 @@ class PostRepository(CRUDRepository):
         post.is_liked = is_liked
         post.comments_count = comments_count
 
-        return post
+        return PostResponseDetailed.model_validate(post, from_attributes=True)
 
-    async def get_posts(self, user_id: UUID) -> list[Post]:
+    async def get_posts(self, user_id: UUID) -> list[PostResponseDetailed]:
         # Correlated subqueries
         post_likes_count = (
             select(func.count())
@@ -96,9 +115,12 @@ class PostRepository(CRUDRepository):
             post.comments_count = row.comments_count
             posts.append(post)
 
-        return posts
+        return [
+            PostResponseDetailed.model_validate(post, from_attributes=True)
+            for post in posts
+        ]
 
-    async def get_post_with_comments(self, post_id: UUID):
+    async def get_post_with_comments(self, post_id: UUID) -> Optional[PostComments]:
         query = (
             select(self.model)
             .where(self.model.id == post_id)
@@ -110,7 +132,9 @@ class PostRepository(CRUDRepository):
         )
 
         result = await self.session.execute(query)
-        return result.scalar_one_or_none()
+        return PostComments.model_validate(
+            result.scalar_one_or_none(), from_attributes=True
+        )
 
     async def get_post_tags(self, post_id: UUID):
         query = (
@@ -122,10 +146,12 @@ class PostRepository(CRUDRepository):
         return result.scalars().all()
 
 
-class CommentRepository(CRUDRepository):
+class CommentRepository(CRUDRepository[CommentCreate, CommentUpdate, CommentResponse]):
     model = Comment
 
-    async def get_comment(self, comment_id: UUID, user_id: UUID):
+    async def get_comment(
+        self, comment_id: UUID, user_id: UUID
+    ) -> CommentResponseDetailed:
         likes_count = (
             select(func.count())
             .where(CommentLike.comment_id == comment_id)
@@ -161,9 +187,9 @@ class CommentRepository(CRUDRepository):
         comment.is_liked = is_liked
         comment.replies_count = replies_count
 
-        return comment
+        return CommentResponseDetailed.model_validate(comment, from_attributes=True)
 
-    async def get_comments(self, user_id: UUID) -> list[Comment]:
+    async def get_comments(self, user_id: UUID) -> list[CommentResponseDetailed]:
         likes_count = (
             select(func.count())
             .where(CommentLike.comment_id == Comment.id)
@@ -199,7 +225,10 @@ class CommentRepository(CRUDRepository):
             comment.is_liked = row.is_liked
             comment.replies_count = row.replies_count
             comments.append(comment)
-        return comments
+        return [
+            CommentResponseDetailed.model_validate(comment, from_attributes=True)
+            for comment in comments
+        ]
 
     async def get_comments_with_children(self, comment_id: UUID):
         # level literal(1).label("level")
@@ -223,7 +252,7 @@ class CommentRepository(CRUDRepository):
         return result.scalars().all()
 
 
-class TagRepository(CRUDRepository):
+class TagRepository(CRUDRepository[TagCreate, TagUpdate, TagResponse]):
     model = Tag
 
     async def add_tag_to_post(self, tag_id: UUID, post_id: UUID):
@@ -260,7 +289,7 @@ class TagRepository(CRUDRepository):
         return row
 
 
-class PostLikeRepository(CRUDRepository):
+class PostLikeRepository(CRUDRepository[None, None, PostLikeResponse]):
     model = PostLike
 
     async def get_who_liked(self, post_id: UUID):
@@ -273,5 +302,5 @@ class PostLikeRepository(CRUDRepository):
         return results.mappings().all()
 
 
-class CommentLikeRepository(CRUDRepository):
+class CommentLikeRepository(CRUDRepository[None, None, CommentLikeResponse]):
     model = CommentLike

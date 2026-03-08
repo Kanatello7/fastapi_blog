@@ -58,7 +58,7 @@ class PostService:
         result = await self.repository.delete_one_or_more(id=post_id, user_id=user_id)
         return result[0] if result else None
 
-    async def get_post_with_comments(self, post_id: UUID) -> Post | None:
+    async def get_post_with_comments(self, post_id: UUID):
         result = await self.repository.get_post_with_comments(post_id=post_id)
         return result
 
@@ -79,7 +79,13 @@ class CommentService:
     async def create_comment(self, data: CommentCreate, user_id: UUID):
         new_data = data.model_dump()
         new_data["user_id"] = user_id
-        return await self.repository.create(new_data)
+        try:
+            return await self.repository.create(new_data)
+        except ForeignKeyConstraintError as e:
+            if e.constraint_name == "comments_post_id_fkey":
+                raise PostNotFoundException()
+            if e.constraint_name == "comments_parent_id_fkey":
+                raise CommentNotFoundException()
 
     async def update_comment(
         self, comment_id: UUID, user_id: UUID, data: CommentUpdate
@@ -158,7 +164,7 @@ class PostLikeService:
     async def like_post(self, post_id: UUID, user_id: UUID):
         data = {"post_id": post_id, "user_id": user_id}
         try:
-            return await self.repo.create(new_data=data)
+            return await self.repo.create(data=data)
         except UniqueConstraintError:
             raise PostLikeUniqueViolationException()
         except ForeignKeyConstraintError as e:
@@ -184,7 +190,7 @@ class CommentLikeService:
     async def like_comment(self, comment_id: UUID, user_id: UUID):
         data = {"comment_id": comment_id, "user_id": user_id}
         try:
-            return await self.repo.create(new_data=data)
+            return await self.repo.create(data=data)
         except UniqueConstraintError:
             raise CommentLikeUniqueViolationException()
         except ForeignKeyConstraintError as e:
