@@ -3,24 +3,32 @@ import secrets
 from datetime import UTC, datetime, timedelta
 
 import jwt
+from passlib.context import CryptContext
 
 from src.auth.conf import settings
 from src.auth.models import RefreshToken
 from src.auth.repository import AuthRepository
 from src.auth.schemas import Token
-from src.auth.utils import hash_password, verify_password
 from src.users.models import User
 
 
 class AuthService:
+    pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+
     def __init__(self, repo: AuthRepository) -> None:
         self.repository = repo
 
     async def authenticate_user(self, username, password) -> None | User:
         user = await self.repository.find_user(username=username)
-        if not user or not verify_password(password, user.password):
+        if not user or not self.verify_password(password, user.password):
             return None
         return user
+
+    def hash_password(self, password: str) -> str:
+        return self.pwd_context.hash(password)
+
+    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
+        return self.pwd_context.verify(plain_password, hashed_password)
 
     def get_access_token(self, user: User) -> str:
         payload = {
@@ -61,7 +69,7 @@ class AuthService:
         if user_exists:
             return None
 
-        hashed_password = hash_password(new_user["password"])
+        hashed_password = self.hash_password(new_user["password"])
         new_user["password"] = hashed_password
         del new_user["password_confirm"]
         user = await self.repository.create_user(new_user)
