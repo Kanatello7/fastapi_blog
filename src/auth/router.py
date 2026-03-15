@@ -4,11 +4,6 @@ from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from src.auth.dependencies import AuthServiceDep, get_current_user
-from src.auth.exceptions import (
-    InvalidCredentialsException,
-    TokenExpiredException,
-    UserExistsException,
-)
 from src.auth.schemas import RefreshToken, Token
 from src.users.models import User
 from src.users.schemas import UserCreate, UserResponse
@@ -22,34 +17,24 @@ async def login(
     service: AuthServiceDep,
 ):
     user = await service.authenticate_user(user_creds.username, user_creds.password)
-    if not user:
-        raise InvalidCredentialsException
-
-    return await service.get_tokens(user)
+    return await service.login(user)
 
 
 @api_router.post(
     "/register", status_code=status.HTTP_201_CREATED, response_model=UserResponse
 )
 async def register(new_user: UserCreate, service: AuthServiceDep):
-    user = await service.register_user(new_user.model_dump())
-    if not user:
-        raise UserExistsException
-    return user
+    return await service.register_user(new_user.model_dump())
 
 
 @api_router.post("/refresh", response_model=Token)
 async def refresh(req: RefreshToken, service: AuthServiceDep):
-    token = await service.refresh(req.refresh_token)
-    if not token:
-        raise TokenExpiredException
+    return await service.refresh(req.refresh_token)
 
 
 @api_router.post("/revoke", status_code=status.HTTP_204_NO_CONTENT)
 async def revoke(req: RefreshToken, service: AuthServiceDep):
-    token = await service.revoke_token(req.refresh_token)
-    if not token:
-        raise TokenExpiredException
+    return await service.revoke_token(req.refresh_token)
 
 
 @api_router.get("/check")

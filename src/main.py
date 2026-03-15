@@ -6,6 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from prometheus_client import make_asgi_app
 
 from src.auth.router import api_router as auth_router
 from src.conf import settings
@@ -44,6 +45,9 @@ app = FastAPI(
     openapi_url=None if settings.PRODUCTION else "/openapi.json",
     lifespan=lifespan,
 )
+
+metrics_app = make_asgi_app()
+app.mount("/metrics", metrics_app)
 
 add_middlewares_to_app(app=app)
 
